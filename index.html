@@ -1,0 +1,1459 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#070b1e">
+<title>NoctCent</title>
+<link rel="stylesheet" href="fonts.css">
+<style>
+:root{
+  --bg:#070b1e; --card:#0d1430; --card2:#16245a; --edge:#1b2752; --edge2:#2f4183; --line:rgba(196,230,251,.08);
+  --text:#e6f0ff; --muted:#7f8cb8; --moon:#c4e6fb; --eye:#7fd4ff; --gold:#ffd36a; --pink:#ff9fb5; --mint:#8fd9c4;
+  --num:'Jersey 15',ui-monospace,monospace; --pix:var(--num); --sans:'DM Sans',system-ui,sans-serif;
+  --dash:repeating-linear-gradient(90deg,var(--edge) 0 4px,transparent 4px 8px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{background:var(--bg)}
+body{background:linear-gradient(180deg,#070b1e 0,#070b1e 45%,#0a1231 100%) fixed;color:var(--text);font:14px/1.45 var(--sans)}
+button,input,select{font:inherit;color:inherit;background:none;border:0;outline:0}
+button{cursor:pointer}
+[hidden]{display:none!important}
+*{scrollbar-width:none}
+*::-webkit-scrollbar{display:none}
+i[data-ic],i[data-sp]{display:inline-grid;place-items:center;font-style:normal;line-height:0}
+svg.pxi,svg.sp,svg.pxmoon{display:block;flex:none}
+
+/* the night sky sits behind every page */
+#sky{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;image-rendering:pixelated;image-rendering:crisp-edges}
+.app{position:relative;z-index:1;max-width:440px;margin:0 auto;min-height:100dvh;padding:20px 18px calc(88px + env(safe-area-inset-bottom))}
+.screen{display:none;flex-direction:column;gap:14px;animation:in .3s steps(4,end)}
+.screen.on{display:flex}
+@keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.top{display:flex;justify-content:space-between;align-items:flex-end;min-height:46px;gap:10px}
+.h1{font:400 32px/1 var(--num);letter-spacing:.03em}
+.sub{font-size:12px;color:var(--muted)}
+.label{font:15px/1.2 var(--num);color:var(--muted);letter-spacing:.06em}
+.big{font:400 38px/1 var(--num);letter-spacing:.02em}
+#rTitle{font-size:26px;white-space:nowrap}
+.link{color:var(--eye);font:16px/1.1 var(--num);letter-spacing:.05em}
+
+/* pixel boxes: stair corners come from the nine-slice images made in pixel.js */
+.card{border:9px solid transparent;border-image:var(--bx-card) 3 fill/9px;padding:7px 8px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:6px solid transparent;border-image:var(--bx-chip) 3 fill/6px;padding:1px 5px;font:15px/1.2 var(--num);letter-spacing:.05em;color:var(--moon);white-space:nowrap}
+.sqbtn,.iconbtn,.gear,.back,.mnav button{width:36px;height:36px;border:6px solid transparent;border-image:var(--bx-card) 3 fill/6px;display:grid;place-items:center;color:var(--moon);flex:none}
+.sqbtn:active,.gear:active,.back:active,.mnav button:active,.iconbtn:active{transform:translateY(2px)}
+.iconbtn.on,.gear.on{color:var(--gold)}
+
+/* home */
+canvas.cat{display:block;width:100%;image-rendering:pixelated;image-rendering:crisp-edges;cursor:pointer}
+.hero{position:relative;border:9px solid transparent;border-image:var(--bx-frame) 3/9px}
+.bubble{position:absolute;left:8px;top:8px;max-width:60%;border:6px solid transparent;border-image:var(--bx-moon) 3 fill/6px;padding:1px 5px;color:#070b1e;font:16px/1.15 var(--num);letter-spacing:.03em;filter:drop-shadow(0 3px 0 rgba(0,0,0,.45));pointer-events:none}
+.bubble:after{content:"";position:absolute;left:12px;top:calc(100% + 6px);width:3px;height:3px;background:#c4e6fb;box-shadow:3px 0 #c4e6fb,6px 0 #c4e6fb,0 3px #c4e6fb,3px 3px #c4e6fb,0 6px #c4e6fb}
+.iconbtn{position:absolute;right:8px;top:8px}
+.row{display:flex;align-items:center;gap:14px}
+.grow{flex:1;min-width:0}
+.list{display:flex;flex-direction:column}
+.item,.note,.acc{display:flex;gap:12px;padding:11px 0;background:var(--dash) top left/100% 2px no-repeat}
+.item:first-child,.note:first-child,.acc:first-child{background:none}
+.item{align-items:center}
+.item .grow>div:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item.tap{cursor:pointer}
+.dot{width:8px;height:8px;flex:none}
+.amt{font-weight:500;font-variant-numeric:tabular-nums;white-space:nowrap}
+.amt.in{color:var(--mint)}
+.amt.move{color:var(--muted)}
+.del{color:var(--muted);padding:4px 6px;font:20px/1 var(--num)}
+.empty{color:var(--muted);font-size:13px;padding:8px 0 4px;display:flex;align-items:center;gap:12px}
+.empty::before{content:"";flex:none;width:48px;height:27px;background:var(--sp-sleep) center/contain no-repeat}
+.sechead{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.pair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.pair>*{min-width:0}
+.ghost{height:46px;border:6px solid transparent;border-image:var(--bx-card) 3 fill/6px;display:flex;align-items:center;justify-content:center;gap:8px;font:19px/1 var(--num);letter-spacing:.05em;filter:drop-shadow(0 3px 0 #04071a);margin-bottom:3px}
+.ghost:active{transform:translateY(3px);filter:none}
+.ghost b{font-weight:400;font-size:24px;line-height:.8}
+.trio{display:flex;flex-direction:column}
+.trio div{display:flex;justify-content:space-between;align-items:baseline;padding:8px 0;background:var(--dash) top left/100% 2px no-repeat}
+.trio div:first-child{background:none;padding-top:0}
+.trio div:last-child{padding-bottom:0}
+.trio .v{font:400 24px/1 var(--num);letter-spacing:.02em;white-space:nowrap}
+
+/* little cats that live on the cards */
+.perch,.peek{position:relative}
+.perch>i[data-sp]{position:absolute;right:14px;bottom:calc(100% + 5px)}
+.peek>i[data-sp]{position:absolute;right:18px;bottom:calc(100% + 1px)}
+/* they react when touched: the box clips them so they can sink behind the card */
+.perch>i[data-sp],.peek>i[data-sp]{display:block;overflow:hidden;padding:14px 4px 0;cursor:pointer;z-index:2}
+i.hop>svg{animation:hop .5s steps(1)}
+i.wig>svg{animation:wig .55s steps(1)}
+i.duck>svg{animation:duck 2.4s steps(1)}
+i.hide>svg{animation:hide var(--hd,3.6s) steps(1)}
+@keyframes hop{0%{transform:none}12%{transform:translateY(-8px)}30%{transform:translateY(-12px)}55%{transform:translateY(-8px)}75%{transform:translateY(-4px)}100%{transform:none}}
+@keyframes wig{0%{transform:none}15%{transform:translateX(-4px)}35%{transform:translateX(4px)}55%{transform:translateX(-4px)}75%{transform:translateX(4px)}100%{transform:none}}
+@keyframes duck{0%{transform:none}5%{transform:translateY(50%)}10%{transform:translateY(80%)}48%{transform:translateY(80%)}58%{transform:translateY(62%)}72%{transform:translateY(62%)}82%{transform:translateY(38%)}92%{transform:translateY(16%)}100%{transform:none}}
+@keyframes hide{0%{transform:none}3%{transform:translateY(40%)}6%{transform:translateY(80%)}9%{transform:translateY(115%)}86%{transform:translateY(115%)}90%{transform:translateY(75%)}94%{transform:translateY(75%)}97%{transform:translateY(35%)}100%{transform:none}}
+.sp .f2{visibility:hidden}
+.sp .f1{animation:tailA 3.2s steps(1) infinite}
+.sp .f2{animation:tailB 3.2s steps(1) infinite}
+@keyframes tailA{0%,54%{visibility:visible}55%,70%{visibility:hidden}71%,84%{visibility:visible}85%,100%{visibility:hidden}}
+@keyframes tailB{0%,54%{visibility:hidden}55%,70%{visibility:visible}71%,84%{visibility:hidden}85%,100%{visibility:visible}}
+.sp .eye{animation:blink 5.3s steps(1) infinite}
+@keyframes blink{0%,93%{fill:#7fd4ff}94%,100%{fill:#0b0b16}}
+.sp-peek .eye{animation:blink 6.1s steps(1) infinite,look 9s steps(1) infinite}
+@keyframes look{0%,40%{transform:none}41%,58%{transform:translateX(1px)}59%,70%{transform:none}71%,86%{transform:translateX(-1px)}87%,100%{transform:none}}
+
+/* money */
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;border:6px solid transparent;border-image:var(--bx-field) 3 fill/6px}
+.seg button{height:36px;border:6px solid transparent;color:var(--muted);font:18px/1 var(--num);letter-spacing:.05em}
+.seg button.on{border-image:var(--bx-card2) 3 fill/6px;color:var(--text)}
+.amount{display:flex;align-items:baseline;gap:8px;padding:10px 4px 10px;background:var(--dash) bottom left/100% 2px no-repeat}
+.amount span{font:30px/1 var(--num);color:var(--muted)}
+.amount input{font:400 46px/1 var(--num);letter-spacing:.02em;width:100%}
+.amount input::placeholder{color:#2a3766}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.cat-chip{border:6px solid transparent;border-image:var(--bx-chip) 3 fill/6px;padding:3px 7px;color:var(--muted);display:flex;align-items:center;gap:7px}
+.cat-chip.on{border-image:var(--bx-card2) 3 fill/6px;color:var(--text)}
+.field{display:flex;align-items:center;gap:10px;border:6px solid transparent;border-image:var(--bx-field) 3 fill/6px;padding:7px 8px}
+.field input{flex:1;min-width:0;width:100%}
+.field input[type=date]{color-scheme:dark}
+.form{display:flex;flex-direction:column;gap:12px}
+.form .label{margin-bottom:-4px}
+.primary{height:52px;border:6px solid transparent;border-image:var(--bx-gold) 3 fill/6px;color:#1a1408;font:22px/1 var(--num);letter-spacing:.06em;filter:drop-shadow(0 4px 0 #8a6420);margin-bottom:4px}
+.primary:active:not(:disabled){transform:translateY(4px);filter:none}
+.primary:disabled{border-image:var(--bx-chip) 3 fill/6px;color:#56639a;filter:none}
+.acc{align-items:center}
+.acc .ic{width:36px;height:36px;border:6px solid transparent;border-image:var(--bx-card2) 3 fill/6px;display:grid;place-items:center;color:var(--moon);flex:none}
+.acc input,.tabung input{min-width:0;border:6px solid transparent;border-image:var(--bx-field) 3 fill/6px;padding:2px 4px}
+.acc input.nm{flex:1}
+.acc input.bal{width:118px;text-align:right;font-variant-numeric:tabular-nums}
+.navcard{display:flex;align-items:center;gap:12px;text-align:left;color:var(--text);width:100%}
+.navcard>i{color:var(--moon)}
+.navcard:active{transform:translateY(2px)}
+.chev{color:var(--muted)}
+
+/* report */
+.mnav{display:flex;align-items:center;gap:6px}
+.bar{height:8px;background:#141d42;position:relative;overflow:hidden}
+.bar>i{display:block;height:100%}
+.bar::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 6px,var(--card) 6px 8px);pointer-events:none}
+.catrow{display:grid;grid-template-columns:1fr auto;gap:5px 10px;align-items:center;padding:7px 0}
+.catrow .bar{grid-column:1/3}
+.days{display:flex;align-items:flex-end;gap:3px;height:66px;margin-top:12px}
+.days i{flex:1;background:#1f2c5e;min-height:3px}
+.days i.today{background:var(--eye)}
+.days i.over{background:var(--pink)}
+.daygroup{font:15px var(--num);color:var(--muted);padding:12px 0 2px;letter-spacing:.06em}
+
+/* cat */
+.pet{display:flex;gap:14px;align-items:center}
+.pet canvas{width:96px;flex:none;border:6px solid transparent;border-image:var(--bx-frame) 3/6px}
+.stat{display:grid;grid-template-columns:1fr auto;gap:3px 8px;font:14px/1.2 var(--num);letter-spacing:.05em;color:var(--muted)}
+.stat .bar{grid-column:1/3;height:6px;margin-bottom:6px}
+/* the cat page fills the screen: header + cat card stay put, only the chat scrolls */
+#s-cat>*{flex:none}
+.chatwrap{flex:1 1 auto!important;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-mask-image:linear-gradient(transparent,#000 14px);mask-image:linear-gradient(transparent,#000 14px)}
+.chat{display:flex;flex-direction:column;gap:10px;padding-top:10px}
+.setpane{flex:1 1 auto!important;min-height:0;overflow-y:auto}
+.msg{max-width:84%;border:6px solid transparent;padding:2px 5px;line-height:1.4;white-space:pre-wrap}
+.msg.me{align-self:flex-end;border-image:var(--bx-moon) 3 fill/6px;color:#070b1e}
+.msg.cat{align-self:flex-start;border-image:var(--bx-card) 3 fill/6px}
+.msg.cat small{display:block;margin-top:4px;font:13px/1 var(--num);color:var(--muted);letter-spacing:.06em}
+.acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.acts .mini{margin:0;color:var(--eye)}
+.acts .mini.go{border-image:var(--bx-gold) 3 fill/6px;color:#1a1408}
+.typing{align-self:flex-start;font:15px var(--num);letter-spacing:.05em;color:var(--muted);padding-left:4px}
+.ask{display:flex;gap:8px;padding-bottom:4px}
+.ask input{flex:1;min-width:0;height:46px;border:6px solid transparent;border-image:var(--bx-card) 3 fill/6px;padding:0 8px}
+.ask button{width:46px;height:46px;border:6px solid transparent;border-image:var(--bx-gold) 3 fill/6px;color:#1a1408;display:grid;place-items:center;flex:none;filter:drop-shadow(0 3px 0 #8a6420)}
+.ask button:active{transform:translateY(3px);filter:none}
+.mini{border:6px solid transparent;border-image:var(--bx-chip) 3 fill/6px;padding:0 5px;font:15px/1.3 var(--num);letter-spacing:.05em}
+.set{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+.set label{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--muted)}
+.toggle{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--text)}
+.set label.toggle,.form label.toggle{flex-direction:row}
+.sw{width:42px;height:22px;background:#141d42;box-shadow:inset 0 0 0 2px var(--edge);position:relative;flex:none}
+.sw:after{content:"";position:absolute;left:4px;top:4px;width:14px;height:14px;background:var(--muted);transition:left .15s steps(3)}
+.sw.on{background:#5a4718;box-shadow:inset 0 0 0 2px var(--gold)}
+.sw.on:after{left:24px;background:var(--gold)}
+.danger{color:var(--pink);font:16px var(--num);letter-spacing:.05em;align-self:flex-start;padding:4px 0}
+.bp{display:flex;flex-direction:column;gap:10px}
+.lmstatus{display:flex;align-items:center;gap:8px;font-size:13px}
+.lmstatus .dot{background:#5d6a9a}
+.steps{padding-left:18px;font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+.steps b{color:var(--text);font-weight:500}
+.filebtn{cursor:pointer}
+
+/* moon's room */
+.room{position:relative;border:9px solid transparent;border-image:var(--bx-frame) 3/9px;line-height:0;height:calc(100dvh - 116px - env(safe-area-inset-bottom));overflow:hidden;background:#0a0e24}
+.roomgear{position:absolute;right:6px;top:6px;z-index:3;background:rgba(7,11,30,.6)}
+#setPane{margin-top:0}
+#shelfCv{position:absolute;left:0;top:0;width:100%;height:100%;display:block;image-rendering:pixelated;image-rendering:crisp-edges;touch-action:manipulation;z-index:1;will-change:transform,opacity}
+#shelfCv[hidden]{display:none}
+#bedCv{position:absolute;left:0;top:0;width:100%;height:100%;display:block;image-rendering:pixelated;image-rendering:crisp-edges;touch-action:none;z-index:1;will-change:transform,opacity}
+#bedCv[hidden]{display:none}
+.shelfvig{position:absolute;inset:0;pointer-events:none;z-index:2;opacity:0;background:radial-gradient(ellipse at 50% 46%,transparent 30%,rgba(3,5,16,.9) 100%)}
+.shelfback{position:absolute;left:6px;top:6px;z-index:5;background:rgba(7,11,30,.6)}
+.shelfcap{position:absolute;left:14px;right:14px;bottom:14px;z-index:5;text-align:center;line-height:1.3;border:6px solid transparent;border-image:var(--bx-card) 3 fill/6px;padding:4px 8px;pointer-events:none;filter:drop-shadow(0 3px 0 rgba(0,0,0,.5))}
+.shelfcap b{display:block;font:22px/1.1 var(--num);letter-spacing:.06em;text-transform:lowercase}
+.shelfcap span{display:block;margin-top:2px;font-size:12px;color:var(--muted,#8b93c4)}
+#roomCv{display:block;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges;cursor:pointer;touch-action:manipulation}
+.rsay{position:absolute;transform:translateY(-100%);max-width:70%;width:max-content;border:6px solid transparent;border-image:var(--bx-moon) 3 fill/6px;padding:1px 5px;color:#070b1e;font:16px/1.15 var(--num);letter-spacing:.03em;filter:drop-shadow(0 3px 0 rgba(0,0,0,.45));pointer-events:none;text-align:center;z-index:2}
+.notes{position:absolute;left:6px;right:6px;bottom:6px;max-height:58%;overflow-y:auto;line-height:1.45;z-index:4;border:9px solid transparent;border-image:var(--bx-card) 3 fill/9px;padding:4px 6px;filter:drop-shadow(0 4px 0 rgba(0,0,0,.5))}
+.notes .nl{display:flex;gap:10px;padding:8px 0;background:var(--dash) top left/100% 2px no-repeat;line-height:1.45}
+.notes .nl:first-child{background:none}
+.notes .nl i{flex:none;width:8px;height:8px;margin-top:6px}
+.notes.fresh{animation:in .4s steps(4,end)}
+.shelfread{bottom:8px;pointer-events:none;z-index:5}
+.shelfread.top{top:8px;bottom:auto}
+.shelfread .nl{background:none;padding:6px 0 4px}
+.shelfread .rest{color:transparent}
+.shelfread .sub{opacity:0;transition:opacity .3s}
+.shelfread.done .sub{opacity:1}
+
+/* board */
+.note{align-items:flex-start;gap:10px}
+.note .txt{line-height:1.4;word-break:break-word}
+.note.done .txt{color:var(--muted);text-decoration:line-through;text-decoration-color:rgba(127,140,184,.5)}
+.check{width:20px;height:20px;border:2px solid var(--muted);flex:none;margin:1px 2px 0;display:grid;place-items:center;color:#070b1e}
+.check.on{background:var(--mint);border-color:var(--mint)}
+.nicon{width:24px;height:24px;flex:none;display:grid;place-items:center;color:#56639a;margin-top:-1px}
+.pin{color:#56639a;padding:0 2px;flex:none}
+.pin.on{color:var(--gold);filter:drop-shadow(0 0 5px rgba(255,211,106,.5))}
+.due{font:14px/1.2 var(--num);color:var(--muted);letter-spacing:.05em}
+.due.soon{color:var(--gold)}
+.due.late{color:var(--pink)}
+.mini{color:var(--eye);margin-top:6px;margin-right:6px}
+.goalbar{height:6px;margin-top:8px}
+.tabung{display:flex;gap:6px;margin-top:8px;align-items:center}
+.tabung input{flex:1}
+.tabung .mini{margin:0}
+
+/* bottom bar + dialog */
+nav{position:fixed;left:0;right:0;bottom:0;height:calc(66px + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);display:flex;justify-content:center;background:#070b1e;z-index:5}
+nav::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:var(--edge)}
+nav::after{content:"";position:absolute;left:0;right:0;top:3px;height:3px;background:repeating-linear-gradient(90deg,var(--edge) 0 3px,transparent 3px 6px)}
+nav .in{width:100%;max-width:440px;display:flex;justify-content:space-around;align-items:center}
+nav button{display:flex;flex-direction:column;align-items:center;gap:3px;font:14px/1 var(--num);letter-spacing:.07em;color:#56639a;width:72px;padding:8px 0 4px}
+nav button.on{color:var(--gold)}
+nav button.on svg{filter:drop-shadow(0 0 6px rgba(255,211,106,.55))}
+nav button:active i{transform:translateY(2px)}
+.toast{position:fixed;left:50%;top:calc(10px + env(safe-area-inset-top));transform:translate(-50%,-9px);opacity:0;pointer-events:none;border:6px solid transparent;border-image:var(--bx-moon) 3 fill/6px;padding:2px 8px;color:#070b1e;font:16px/1.2 var(--num);letter-spacing:.04em;filter:drop-shadow(0 3px 0 rgba(0,0,0,.5));transition:transform .18s steps(3),opacity .18s steps(3);z-index:9;display:flex;align-items:center;gap:8px;width:max-content;max-width:min(404px,calc(100vw - 28px))}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.toast.act{pointer-events:auto}
+.toast u{margin-left:8px;text-underline-offset:3px}
+@media (prefers-reduced-motion:reduce){.sp *,.screen{animation:none!important}.sp .f2{visibility:hidden!important}.sp .f1{visibility:visible!important}}
+.chomp{position:fixed;inset:0;z-index:9999;pointer-events:all}.chomp canvas{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;z-index:9999}.chomp canvas.throat{z-index:9997}.chompAmt{position:absolute;left:0;right:0;top:46%;text-align:center;font:28px var(--num);color:var(--gold);letter-spacing:.06em;opacity:0;z-index:10000;text-shadow:0 3px 0 #000}.chompAmt.go{animation:chompAmt 1.15s ease-out forwards}@keyframes chompAmt{0%{opacity:0;transform:translateY(10px) scale(.6)}25%{opacity:1;transform:translateY(-6px) scale(1.15)}60%{opacity:1;transform:translateY(-22px) scale(1)}100%{opacity:0;transform:translateY(-50px) scale(.9)}}
+</style>
+</head>
+<body>
+<canvas id="sky" aria-hidden="true"></canvas>
+<div class="app">
+
+  <!-- ================= HOME: today at a glance ================= -->
+  <section class="screen on" id="s-today">
+    <div class="top">
+      <div><div class="h1" id="greet">Good evening</div><div class="sub" id="dateTxt"></div></div>
+      <span class="chip" id="phase" title="Tonight's moon phase"></span>
+    </div>
+    <div class="hero">
+      <canvas class="cat" id="catBig" aria-label="MoonCat, a black cat in front of the moon"></canvas>
+      <div class="bubble" id="bubble"></div>
+      <button class="iconbtn" id="musicBtn" aria-label="Music" onclick="toggleMusic()"><i data-ic="music"></i></button>
+    </div>
+    <div class="card" onclick="go('money')" style="cursor:pointer">
+      <div class="label">total money</div>
+      <div class="big" id="hTotal">Rp 0</div>
+      <div class="sub" id="hTotalSub"></div>
+    </div>
+    <div class="card row">
+      <span id="budgetMoon"></span>
+      <div class="grow">
+        <div class="label">spending budget left this month</div>
+        <div class="big" style="font-size:30px" id="remain">Rp 0</div>
+        <div class="sub" id="remainSub"></div>
+      </div>
+    </div>
+    <div class="pair">
+      <button class="ghost" onclick="openForm('out')"><b style="color:var(--pink)">−</b> Expense</button>
+      <button class="ghost" onclick="openForm('in')"><b style="color:var(--mint)">+</b> Income</button>
+    </div>
+    <div class="card" id="homeBoard" hidden>
+      <div class="sechead"><span class="label">from the board</span><button class="link" onclick="go('board')">see all</button></div>
+      <div class="list" id="homeBoardList"></div>
+    </div>
+    <div class="card">
+      <div class="sechead"><span class="label">today</span></div>
+      <div class="list" id="todayList"></div>
+    </div>
+  </section>
+
+  <!-- ================= MONEY: wallets + record ================= -->
+  <section class="screen" id="s-money">
+    <div class="top"><div><div class="h1">Money</div><div class="sub">all your wallets, and where you record</div></div></div>
+    <div class="card perch">
+      <i data-sp="sit" data-s="4"></i>
+      <div class="label">total money</div>
+      <div class="big" id="mTotal">Rp 0</div>
+      <div class="sub" id="mTotalSub"></div>
+    </div>
+    <button class="card navcard" onclick="go('report')">
+      <i data-ic="chart"></i>
+      <span class="grow"><span style="display:block">Monthly report</span><span class="sub" id="mReportSub"></span></span><i data-ic="right" data-s="12" class="chev"></i>
+    </button>
+    <div class="card">
+      <div class="sechead"><span class="label">wallets</span><button class="link" id="accEditBtn" onclick="toggleAccEdit()">edit</button></div>
+      <div id="accList"></div>
+    </div>
+    <div class="card form" id="formCard">
+      <div class="sechead" style="margin:0"><span class="label" id="formTitle">record</span><button class="link" id="cancelEdit" hidden onclick="cancelEdit()">cancel edit</button></div>
+      <div class="seg" id="seg">
+        <button data-t="out" onclick="setType('out')">Out</button>
+        <button data-t="in" onclick="setType('in')">In</button>
+        <button data-t="move" onclick="setType('move')">Move</button>
+      </div>
+      <label class="amount"><span>Rp</span><input id="amt" inputmode="numeric" placeholder="0" autocomplete="off"></label>
+      <div class="label" id="catLabel">category</div>
+      <div class="chips" id="catChips"></div>
+      <div class="label" id="accLabel">from wallet</div>
+      <div class="chips" id="accChips"></div>
+      <div class="label" id="toLabel">to wallet</div>
+      <div class="chips" id="toChips"></div>
+      <div class="field"><input id="note" placeholder="note (optional)" maxlength="60"></div>
+      <div class="field"><span class="sub">date</span><input type="date" id="date"></div>
+      <button class="primary" id="saveBtn" disabled onclick="save()">Save</button>
+    </div>
+  </section>
+
+  <!-- ================= REPORT: month by month ================= -->
+  <section class="screen" id="s-report">
+    <div class="top">
+      <div class="row" style="gap:10px"><button class="back" onclick="go('money')" aria-label="Back to Money"><i data-ic="left" data-s="12"></i></button><div><div class="h1" id="rTitle"></div><div class="sub">monthly report</div></div></div>
+      <div class="mnav"><span id="rMoon" title="Budget left this month" style="margin-right:4px"></span><button onclick="shiftMonth(-1)" aria-label="Previous month"><i data-ic="left" data-s="12"></i></button><button onclick="shiftMonth(1)" aria-label="Next month"><i data-ic="right" data-s="12"></i></button></div>
+    </div>
+    <div class="card">
+      <div class="trio">
+        <div><span class="label">in</span><span class="v" id="rIn" style="color:var(--mint)"></span></div>
+        <div><span class="label">out</span><span class="v" id="rOut"></span></div>
+        <div><span class="label">net</span><span class="v" id="rNet"></span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="sechead"><span class="label">spending vs budget</span><span class="sub" id="rPct"></span></div>
+      <div class="bar"><i id="rBar" style="width:0;background:var(--eye)"></i></div>
+      <div class="days" id="rDays"></div>
+      <div class="sub" style="margin-top:6px">bars = spending per day · red = over the daily share</div>
+    </div>
+    <div class="card"><div class="label" style="margin-bottom:4px">spending by category</div><div id="rCats"></div></div>
+    <div class="card"><div class="label">history</div><div id="rList"></div></div>
+  </section>
+
+  <!-- ================= BOARD: notes, reminders, dreams ================= -->
+  <section class="screen" id="s-board">
+    <div class="top"><div><div class="h1">Board</div><div class="sub">notes, reminders, and dreams</div></div></div>
+    <div class="card form peek" id="composer">
+      <i data-sp="peek" data-s="4"></i>
+      <div class="seg" id="kseg">
+        <button data-k="note" onclick="setKind('note')">Note</button>
+        <button data-k="remind" onclick="setKind('remind')">Reminder</button>
+        <button data-k="goal" onclick="setKind('goal')">Dream</button>
+      </div>
+      <div class="field"><input id="nText" maxlength="120" autocomplete="off"></div>
+      <div class="pair" id="nRemindRow">
+        <div class="field"><input type="date" id="nDue" aria-label="Date"></div>
+        <div class="field"><span class="sub">Rp</span><input id="nAmt" inputmode="numeric" placeholder="optional" autocomplete="off"></div>
+      </div>
+      <div class="field" id="nGoalRow"><span class="sub">target Rp</span><input id="nTarget" inputmode="numeric" placeholder="0" autocomplete="off"></div>
+      <label class="toggle" style="cursor:pointer" id="nRepeatRow">Repeat every month<span class="sw" id="nRepeat" role="switch" onclick="this.classList.toggle('on')"></span></label>
+      <button class="primary" id="nAdd" onclick="addNote()" disabled>Pin it</button>
+    </div>
+    <div id="boardLists"></div>
+  </section>
+
+  <!-- ================= CAT: Moon's room + settings ================= -->
+  <section class="screen" id="s-cat">
+    <div class="room" id="roomPane">
+      <canvas id="roomCv" aria-label="Moon's room: a bed, a lamp, a bookshelf, a food bowl and a round carpet"></canvas>
+      <canvas id="shelfCv" hidden aria-label="Moon's bookshelf"></canvas>
+      <canvas id="bedCv" hidden aria-label="Moon's bed"></canvas>
+      <div class="shelfvig" id="bedVig"></div>
+      <button class="gear shelfback" id="bedBack" aria-label="Back to the room" hidden><i data-ic="left"></i></button>
+      <div class="shelfvig" id="shelfVig"></div>
+      <div class="rsay" id="roomSay" hidden></div>
+      <button class="gear shelfback" id="shelfBack" aria-label="Back to the room" hidden><i data-ic="left"></i></button>
+      <div class="shelfcap" id="shelfCap" hidden><b></b><span></span></div>
+      <div class="notes shelfread" id="shelfRead" hidden><div class="sechead"><span class="label" id="srTitle"></span><span class="sub">tap to close</span></div><div class="nl"><i id="srDot"></i><span><span id="srTyped"></span><span class="rest" id="srRest"></span></span></div></div>
+      <button class="gear roomgear" id="gearBtn" aria-label="Settings" onclick="toggleSettings()"><i data-ic="gear"></i></button>
+      <div class="notes" id="notesCard" hidden>
+        <div class="sechead"><span class="label" id="notesTitle">moon's notes</span><span class="row" style="gap:10px"><span class="sub" id="notesDate"></span><button class="link" onclick="$('notesCard').hidden=true" aria-label="Close">✕</button></span></div>
+        <div id="notesBody"></div>
+      </div>
+    </div>
+    <div class="card setpane" id="setPane" hidden>
+      <div class="sechead"><span>Settings</span><button class="link" onclick="toggleSettings()">close</button></div>
+      <div class="set">
+        <label>Monthly spending budget<div class="field"><span class="sub">Rp</span><input id="setBudget" inputmode="numeric"></div></label>
+        <div class="toggle">Background music<span class="sw" id="swMusic" role="switch" onclick="toggleMusic()"></span></div>
+        <div class="toggle">Notifications from Moon<span class="sw" id="swNotif" role="switch" onclick="toggleNotif()"></span></div>
+        <label id="notifHourRow">Daily reminder time<div class="field"><select id="setNotifHour" onchange="setNotifHour(this.value)" style="width:100%;background:transparent;color:inherit;border:0;font:inherit"></select></div></label>
+        <div class="sub">daily log reminder, bills, a sunday summary, streaks, full moons, and a note when Moon misses you.</div>
+        <div class="label" style="margin-top:6px">backup</div>
+        <div class="sub">save all your records to one file, then restore them on another phone or browser.</div>
+        <div class="pair">
+          <button class="ghost" onclick="exportData()">Save backup</button>
+          <label class="ghost filebtn">Restore…<input type="file" id="importFile" accept=".json,application/json" hidden></label>
+        </div>
+        <button class="danger" onclick="wipe()">Delete all data</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<nav><div class="in">
+  <button data-go="today" class="on" onclick="go('today')"><i data-ic="home"></i>Home</button>
+  <button data-go="money" onclick="go('money')"><i data-ic="wallet"></i>Money</button>
+  <button data-go="board" onclick="go('board')"><i data-ic="board"></i>Board</button>
+  <button data-go="cat" onclick="go('cat')"><i data-ic="cat"></i>Cat</button>
+</div></nav>
+<div class="toast" id="toast"></div>
+
+<script src="pixel.js?v=5"></script>
+<script src="words.js?v=9"></script>
+<script src="room.js?v=4"></script>
+<script src="shelf.js?v=6"></script>
+<script src="bed.js?v=1"></script>
+<script src="mooncat.js?v=5"></script>
+<script>
+/* ---------------- data ---------------- */
+const KEY = 'mooncat.v1';
+const CATS_OUT = [
+  {id:'makan', name:'Food', c:'#c4e6fb'}, {id:'kopi', name:'Snacks', c:'#ffd36a'},
+  {id:'transport', name:'Transport', c:'#7fd4ff'}, {id:'belanja', name:'Shopping', c:'#8f8cf0'},
+  {id:'tagihan', name:'Bills', c:'#ff9fb5'}, {id:'lain', name:'Other', c:'#5d6a9a'}
+];
+const CATS_IN = [
+  {id:'gaji', name:'Salary', c:'#8fd9c4'}, {id:'kiriman', name:'Transfer', c:'#c4e6fb'},
+  {id:'jualan', name:'Sales', c:'#ffd36a'}, {id:'lainin', name:'Other', c:'#5d6a9a'}
+];
+const catOf = id => CATS_OUT.concat(CATS_IN).find(c => c.id === id) || CATS_OUT[5];
+const DEF = {budget:2000000, tx:[], accs:null, xp:0, lastFeed:0, music:true, notif:{on:true, hour:21}};
+let S;
+try { S = Object.assign({}, DEF, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { S = Object.assign({}, DEF); }
+function migrate(){
+  if (!Array.isArray(S.accs) || !S.accs.length)
+    S.accs = [{id:'tunai', name:'Cash', start:0}, {id:'bank', name:'Bank', start:0}, {id:'ewallet', name:'E-wallet', start:0}];
+  S.accs.forEach(a => { if (a.name === 'Tunai') a.name = 'Cash'; const m = /^Dompet (\d+)$/.exec(a.name); if (m) a.name = 'Wallet ' + m[1]; });
+  S.tx.forEach(t => { if (!t.type) t.type = 'out'; if (!t.acc) t.acc = S.accs[0].id; });
+  if (!Array.isArray(S.notes)) S.notes = [];
+  if (!S.room || typeof S.room !== 'object') S.room = {food: 1, full: 80, fullAt: Date.now(), lamp: true};
+  ['chat', 'ai', 'model', 'url', 'brainMode', 'localModelName'].forEach(k => delete S[k]);
+}
+migrate();
+function persist(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} queueNotify(); }
+
+const rp = n => (n < 0 ? '−' : '') + 'Rp ' + Math.round(Math.abs(n)).toLocaleString('en-US');
+const fmt = n => n.toLocaleString('en-US');
+const pad = n => String(n).padStart(2, '0');
+const dkey = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const today = () => dkey(new Date());
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const digits = s => parseInt(String(s).replace(/\D/g, '') || '0', 10);
+
+/* ---------------- the cat speaks (lines live in words.js) ---------------- */
+let holdUntil = 0, lastSayAt = 0, lastIdleAt = Date.now(), idleN = 0;
+// Says a line: always in the bubble on Beranda; as a little dialog when you are on another page.
+// o.undo = [label, fn] adds an undo button; o.info = plain extra text shown as a dialog on Beranda.
+function catSay(key, vars, o = {}){
+  const line = CatWords.pick(key, vars); if (!line) return '';
+  $('bubble').textContent = line;
+  holdUntil = Date.now() + (o.hold || 9000); lastSayAt = lastIdleAt = Date.now();
+  if (current !== 'today' || o.undo || o.toast) toast(line, o.undo && o.undo[0], o.undo && o.undo[1], true);
+  else if (o.info) toast(o.info);
+  const mc = !o.noHop && MINI[current];
+  if (mc && mc._play && !/(hide|duck)/.test(mc.className)) mc._play('hop', 550);
+  return line;
+}
+/* the small cats on Money and Board: tap them */
+const MINI = {};
+function miniCat(page, sel, kind){
+  const el = document.querySelector(sel); if (!el) return;
+  MINI[page] = el;
+  let taps = [], busyUntil = 0;
+  el._play = (cls, ms) => {
+    el.classList.remove('hop', 'wig', 'duck', 'hide'); void el.offsetWidth;
+    el.style.setProperty('--hd', ms + 'ms'); el.classList.add(cls);
+    clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove(cls), ms);
+  };
+  el.addEventListener('click', e => {
+    e.stopPropagation();
+    const now = Date.now(); if (now < busyUntil) return;
+    taps = taps.filter(t => now - t < 2500).concat(now);
+    if (taps.length >= 3) { // too much: it goes away for a while
+      taps = []; const ms = kind === 'sit' ? 3800 : 5200; busyUntil = now + ms;
+      el._play('hide', ms); catSay('mini_' + kind + '_annoyed', null, {noHop: true});
+    } else if (kind === 'peek') { busyUntil = now + 700; el._play('duck', 2400); catSay('mini_peek', null, {noHop: true}); }
+    else { el._play(Math.random() < .5 ? 'hop' : 'wig', 560); catSay('mini_sit', null, {noHop: true}); }
+  });
+}
+const undoSay = fn => ['undo', () => { fn(); catSay('undo', null, {toast:true}); }];
+const short = (t, n = 26) => { t = String(t).toLowerCase(); return t.length > n ? t.slice(0, n - 1) + '…' : t; };
+function streak(){ // days in a row (ending today or yesterday) with at least one record
+  const days = new Set(S.tx.map(t => t.date)), d = new Date();
+  if (!days.has(dkey(d))) d.setDate(d.getDate() - 1);
+  let n = 0; while (days.has(dkey(d))) { n++; d.setDate(d.getDate() - 1); }
+  return n;
+}
+
+/* ---------------- money ---------------- */
+const accOf = id => S.accs.find(a => a.id === id) || {id, name:'deleted wallet', start:0};
+function balance(id){
+  let b = accOf(id).start || 0;
+  for (const t of S.tx) {
+    if (t.type === 'in' && t.acc === id) b += t.amount;
+    if (t.type === 'out' && t.acc === id) b -= t.amount;
+    if (t.type === 'move') { if (t.acc === id) b -= t.amount; if (t.to === id) b += t.amount; }
+  }
+  return b;
+}
+const totalMoney = () => S.accs.reduce((a, x) => a + balance(x.id), 0);
+const sum = (tx, type) => tx.filter(t => t.type === type).reduce((a, t) => a + t.amount, 0);
+
+/* numbers the cat relies on (never computed by the AI) */
+function facts(){
+  const now = new Date(), ym = dkey(now).slice(0, 7);
+  const monthAll = S.tx.filter(t => t.date.startsWith(ym));
+  const month = monthAll.filter(t => t.type === 'out');
+  const spent = sum(monthAll, 'out'), income = sum(monthAll, 'in');
+  const tToday = S.tx.filter(t => t.date === today());
+  const spentToday = sum(tToday, 'out');
+  const dim = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const daysLeft = dim - now.getDate() + 1;
+  const remain = S.budget - spent;
+  const allowance = Math.max(0, Math.floor((remain + spentToday) / daysLeft));
+  const leftToday = allowance - spentToday;
+  const byCat = {};
+  month.forEach(t => byCat[t.cat] = (byCat[t.cat] || 0) + t.amount);
+  const top = Object.entries(byCat).sort((a, b) => b[1] - a[1])[0];
+  return {spent, income, spentToday, tToday, remain, allowance, leftToday, daysLeft, dim, byCat, top, budget:S.budget, count:month.length, total:totalMoney()};
+}
+function catStats(){
+  const f = facts();
+  const full = window.Room ? Math.round(Room.fullness() / 10) : 10;
+  const dayFrac = (new Date().getDate() - 1) / f.dim;
+  const health = S.budget > 0 ? (f.remain / S.budget) / Math.max(.05, 1 - dayFrac) : 1;
+  const happy = Math.max(0, Math.min(10, Math.round(health * 8 + (f.leftToday >= 0 ? 2 : -2))));
+  const level = Math.floor(S.xp / 100) + 1;
+  return {full, happy, level, xp:S.xp % 100, health};
+}
+function syncMood(){
+  const c = catStats();
+  MoonCat.setMood(c.happy <= 3 ? 'sad' : c.full <= 1 ? 'sleepy' : 'normal');
+  MoonCat.setScene({health: c.health, phase: moonAge() / 29.530588853});
+}
+
+/* ---------------- moon phase (the moon behind the cat follows the real sky) ---------------- */
+function moonAge(d = new Date()){
+  const syn = 29.530588853, ref = Date.UTC(2000, 0, 6, 18, 14);
+  return ((((d - ref) / 864e5) % syn) + syn) % syn;
+}
+function moonPhase(d = new Date()){
+  const names = ['new moon','waxing crescent','first quarter','waxing gibbous','full moon','waning gibbous','last quarter','waning crescent'];
+  return names[Math.floor((moonAge(d) / 29.530588853) * 8 + .5) % 8];
+}
+
+/* ---------------- navigation ---------------- */
+let current = 'today';
+function go(name){
+  const prev = current; current = name;
+  document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === 's-' + name));
+  const tab = name === 'report' ? 'money' : name; // the report lives under Money
+  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.go === tab));
+  window.scrollTo(0, 0);
+  if (name === 'today') renderToday();
+  if (name === 'money') renderMoney();
+  if (name === 'report') renderReport();
+  if (name === 'board') renderBoard();
+  if (name === 'cat') { renderCat(); Room.enter(); }
+  if (prev === 'cat' && name !== 'cat') { Shelf.close(true); Bed.close(true); Room.leave(); }
+  if (name !== prev && Date.now() - lastSayAt > 1500) visitSay(name);
+}
+const visited = {};
+function visitSay(name){
+  if (name === 'report') return reportSay();
+  if (!CatWords.has('visit_' + name)) return;
+  if (!visited[name] || Math.random() < .25) { visited[name] = 1; catSay('visit_' + name); }
+}
+function reportSay(){
+  const now = new Date(), cur = view.getFullYear() === now.getFullYear() && view.getMonth() === now.getMonth();
+  if (!cur) return catSay(view > now ? 'report_future' : 'report_past');
+  const ym = view.getFullYear() + '-' + pad(view.getMonth() + 1), tx = S.tx.filter(t => t.date.startsWith(ym));
+  const pct = S.budget ? Math.round(sum(tx, 'out') / S.budget * 100) : 0;
+  catSay(!tx.length ? 'report_empty' : pct > 100 ? 'report_over' : pct > 55 ? 'report_mid' : 'report_good', {pct});
+}
+function rerender(){ renderToday(); renderMoney(); renderReport(); renderBoard(); }
+
+/* ---------------- shared list item ---------------- */
+function itemHTML(t){
+  let title, sub, amt;
+  if (t.type === 'move') {
+    title = t.note || 'Move money';
+    sub = accOf(t.acc).name + ' → ' + accOf(t.to).name;
+    amt = `<span class="amt move">⇄ ${rp(t.amount)}</span>`;
+  } else {
+    const c = catOf(t.cat);
+    title = t.note || c.name;
+    sub = (t.note ? c.name + ' · ' : '') + accOf(t.acc).name;
+    amt = t.type === 'in' ? `<span class="amt in">+${rp(t.amount)}</span>` : `<span class="amt">−${rp(t.amount)}</span>`;
+  }
+  const dot = t.type === 'move' ? '#5d6a9a' : catOf(t.cat).c;
+  return `<div class="item tap" onclick="editTx('${t.id}')" title="Tap to edit"><span class="dot" style="background:${dot}"></span><div class="grow"><div>${esc(title)}</div><div class="sub">${esc(sub)}</div></div>${amt}<button class="del" aria-label="Delete" onclick="event.stopPropagation();delTx('${t.id}')">×</button></div>`;
+}
+function delTx(id){
+  const i = S.tx.findIndex(t => t.id === id); if (i < 0) return;
+  const [t] = S.tx.splice(i, 1); persist(); rerender();
+  catSay('tx_deleted', null, {undo: undoSay(() => { S.tx.splice(i, 0, t); persist(); rerender(); })});
+}
+
+/* ---------------- home ---------------- */
+function bubbleText(f){
+  const h = new Date().getHours();
+  const due = openReminders().filter(n => n.due && dayDiff(n.due) <= 0);
+  if (due.length) return (dayDiff(due[0].due) < 0 ? 'overdue: ' : 'today: ') + due[0].text.toLowerCase().slice(0, 40) + (due.length > 1 ? ` (+${due.length - 1})` : '');
+  if (!S.budget) return 'set a budget first, in the cat tab.';
+  if (f.leftToday < 0) return 'over today\'s share. slower tomorrow.';
+  if (!f.tToday.length && h >= 12 && h < 16) return 'did you record lunch?';
+  if (!f.tToday.length && h >= 18) return 'no records today yet…';
+  if (h >= 22 || h < 4) return 'the night is still long.';
+  if (f.leftToday > 0) return rp(f.leftToday) + ' still safe today.';
+  return '…';
+}
+function renderToday(){
+  const now = new Date(), h = now.getHours();
+  $('greet').textContent = h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+  $('dateTxt').textContent = DAYS[now.getDay()] + ', ' + MONTHS[now.getMonth()] + ' ' + now.getDate();
+  $('phase').innerHTML = '<span style="color:var(--gold);display:grid">' + PX.icon('moon', 12) + '</span>' + moonPhase();
+  const f = facts();
+  if (Date.now() > holdUntil) $('bubble').textContent = bubbleText(f);
+  PX.count($('hTotal'), f.total, rp);
+  $('hTotal').style.color = f.total < 0 ? 'var(--pink)' : '';
+  $('hTotalSub').textContent = 'in ' + S.accs.length + ' wallets · this month +' + rp(f.income) + ' / −' + rp(f.spent);
+  PX.count($('remain'), f.remain, rp);
+  $('remain').style.color = f.remain < 0 ? 'var(--pink)' : '';
+  $('remainSub').textContent = 'of ' + rp(S.budget) + ' · ' + rp(Math.max(0, f.leftToday)) + ' still safe today';
+  const frac = S.budget ? Math.max(0, Math.min(1, f.remain / S.budget)) : 0;
+  if ($('budgetMoon')._f !== frac) { $('budgetMoon')._f = frac; $('budgetMoon').innerHTML = PX.moon(frac, 4); }
+  $('todayList').innerHTML = f.tToday.length ? f.tToday.slice().reverse().map(itemHTML).join('')
+    : '<div class="empty">no records today yet.</div>';
+  // pinned notes + reminders due within 3 days
+  const hb = S.notes.filter(n => !n.done && (n.pinned || (n.kind === 'remind' && n.due && dayDiff(n.due) <= 3))).sort(noteOrder).slice(0, 4);
+  $('homeBoard').hidden = !hb.length;
+  $('homeBoardList').innerHTML = hb.map(noteHTML).join('');
+  syncMood();
+}
+function pokeCat(e){
+  const r = e.currentTarget.getBoundingClientRect();
+  catSay(MoonCat.poke((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height), null, {hold: 5000});
+}
+$('catBig').addEventListener('click', pokeCat);
+document.addEventListener('pointerdown', e => { if (!e.target.closest('canvas.cat')) MoonCat.wake(); });
+
+/* ---------------- money: wallets ---------------- */
+let accEdit = false;
+function toggleAccEdit(){ accEdit = !accEdit; renderAccs(); if (accEdit) catSay('edit_on'); }
+function renderMoney(){
+  const f = facts();
+  PX.count($('mTotal'), f.total, rp);
+  $('mTotal').style.color = f.total < 0 ? 'var(--pink)' : '';
+  $('mTotalSub').textContent = 'this month in ' + rp(f.income) + ' · out ' + rp(f.spent);
+  $('mReportSub').textContent = MONTHS[new Date().getMonth()] + ' · ' + (S.budget ? Math.round(f.spent / S.budget * 100) + '% of budget used' : 'month by month');
+  renderAccs(); renderForm();
+}
+const ACC_IC = PX.icon('wallet');
+function renderAccs(){
+  $('accEditBtn').textContent = accEdit ? 'done' : 'edit';
+  if (!accEdit) {
+    $('accList').innerHTML = S.accs.map(a => { const b = balance(a.id);
+      return `<div class="acc"><span class="ic">${ACC_IC}</span><span class="grow">${esc(a.name)}</span><span class="amt" style="${b < 0 ? 'color:var(--pink)' : ''}">${rp(b)}</span></div>`; }).join('');
+    return;
+  }
+  $('accList').innerHTML = S.accs.map(a => `<div class="acc">
+      <input class="nm" value="${esc(a.name)}" maxlength="20" aria-label="Wallet name" onchange="renameAcc('${a.id}', this.value)">
+      <input class="bal" inputmode="numeric" value="${fmt(Math.max(0, balance(a.id)))}" aria-label="Current balance" oninput="this.value = digits(this.value) ? fmt(digits(this.value)) : ''" onchange="setBalance('${a.id}', this.value)">
+      <button class="del" aria-label="Delete wallet" onclick="removeAcc('${a.id}')">×</button></div>`).join('') +
+    `<div class="sub" style="padding:8px 0 2px">change the numbers to your real balance right now.</div>
+     <button class="link" style="padding:6px 0" onclick="addAcc()">+ add wallet</button>`;
+}
+function renameAcc(id, v){ const a = accOf(id); a.name = v.trim() || a.name; persist(); renderForm(); catSay('acc_rename', {acc: a.name}); }
+function setBalance(id, v){ const a = accOf(id); a.start = (a.start || 0) + digits(v) - balance(id); persist(); renderMoney(); renderToday(); catSay('acc_balance', {acc: a.name, amt: rp(balance(id))}); }
+function addAcc(){ S.accs.push({id:uid(), name:'Wallet ' + (S.accs.length + 1), start:0}); persist(); renderAccs(); renderForm(); catSay('acc_add'); }
+function removeAcc(id){
+  if (S.accs.length <= 1) return catSay('acc_min');
+  if (S.tx.some(t => t.acc === id || t.to === id)) return catSay('acc_has_tx');
+  if (balance(id) !== 0) return catSay('acc_not_empty');
+  S.accs = S.accs.filter(a => a.id !== id); persist(); renderMoney(); catSay('acc_removed');
+}
+
+/* ---------------- money: record ---------------- */
+let fType = 'out', selCat = 'makan', selAcc = null, selTo = null, editingId = null, payingNote = null;
+// preset: {amount, note, cat, acc, to, date} — used by "bayar" on a reminder and by editing
+function openForm(type, preset = {}){
+  if (!preset.keepEdit) { editingId = null; payingNote = preset.noteId || null; }
+  go('money'); setType(type);
+  if (preset.cat) selCat = preset.cat;
+  if (preset.acc) selAcc = preset.acc;
+  if (preset.to) selTo = preset.to;
+  $('amt').value = preset.amount ? fmt(preset.amount) : '';
+  $('note').value = preset.note || '';
+  $('date').value = preset.date || today();
+  renderForm();
+  setTimeout(() => { $('formCard').scrollIntoView({behavior:'smooth', block:'start'}); if (!preset.amount) $('amt').focus({preventScroll:true}); }, 60);
+}
+function editTx(id){
+  const t = S.tx.find(x => x.id === id); if (!t) return;
+  editingId = id; payingNote = null;
+  openForm(t.type, {amount:t.amount, note:t.note, cat:t.cat, acc:t.acc, to:t.to, date:t.date, keepEdit:true});
+}
+function cancelEdit(){
+  editingId = null; payingNote = null;
+  $('amt').value = ''; $('note').value = ''; $('date').value = today(); renderForm();
+}
+function setType(t){
+  fType = t;
+  selCat = t === 'in' ? CATS_IN[0].id : t === 'out' ? (CATS_OUT.some(c => c.id === selCat) ? selCat : CATS_OUT[0].id) : selCat;
+  renderForm();
+}
+function chipsHTML(items, sel, attr){
+  return items.map(c => `<button class="cat-chip${c.id === sel ? ' on' : ''}" data-${attr}="${c.id}">${c.c ? `<span class="dot" style="background:${c.c}"></span>` : ''}${esc(c.name)}</button>`).join('');
+}
+function renderForm(){
+  if (!S.accs.some(a => a.id === selAcc)) selAcc = S.accs[0].id;
+  if (!S.accs.some(a => a.id === selTo) || selTo === selAcc) selTo = (S.accs.find(a => a.id !== selAcc) || {}).id;
+  document.querySelectorAll('#seg button').forEach(b => b.classList.toggle('on', b.dataset.t === fType));
+  const mv = fType === 'move';
+  $('catLabel').style.display = $('catChips').style.display = mv ? 'none' : '';
+  $('toLabel').style.display = $('toChips').style.display = mv ? '' : 'none';
+  $('catChips').innerHTML = chipsHTML(fType === 'in' ? CATS_IN : CATS_OUT, selCat, 'c');
+  $('accLabel').textContent = fType === 'in' ? 'into wallet' : 'from wallet';
+  $('accChips').innerHTML = chipsHTML(S.accs, selAcc, 'a');
+  $('toChips').innerHTML = chipsHTML(S.accs.filter(a => a.id !== selAcc), selTo, 'a');
+  if (!$('date').value) $('date').value = today();
+  validate();
+}
+function validate(){
+  const ok = digits($('amt').value) > 0 && (fType !== 'move' || (selTo && selTo !== selAcc));
+  $('saveBtn').disabled = !ok;
+  $('saveBtn').textContent = editingId ? 'Save changes' : fType === 'out' ? 'Save expense' : fType === 'in' ? 'Save income' : 'Move';
+  const pn = payingNote && S.notes.find(n => n.id === payingNote);
+  $('formTitle').textContent = editingId ? 'edit record' : pn ? 'pay: ' + pn.text.toLowerCase().slice(0, 30) : 'record';
+  $('cancelEdit').hidden = !editingId && !pn;
+  $('cancelEdit').textContent = editingId ? 'cancel edit' : 'cancel';
+}
+$('catChips').addEventListener('click', e => { const b = e.target.closest('[data-c]'); if (b) { selCat = b.dataset.c; renderForm(); } });
+$('accChips').addEventListener('click', e => { const b = e.target.closest('[data-a]'); if (b) { selAcc = b.dataset.a; renderForm(); } });
+$('toChips').addEventListener('click', e => { const b = e.target.closest('[data-a]'); if (b) { selTo = b.dataset.a; renderForm(); } });
+$('amt').addEventListener('input', e => {
+  const n = digits(e.target.value);
+  e.target.value = n ? fmt(n) : '';
+  validate();
+});
+
+/* ---------------- CHOMP: a giant mouth eats your income ---------------- */
+function chompGhost(){
+  const src = $('formCard'); if (!src) return null;
+  const r = src.getBoundingClientRect(); if (r.width < 10 || r.bottom < 0 || r.top > innerHeight) return null;
+  const g = src.cloneNode(true); g.removeAttribute('id'); g.querySelectorAll('[id]').forEach(e => e.removeAttribute('id'));
+  const a = src.querySelectorAll('input,textarea,select'), b = g.querySelectorAll('input,textarea,select'); a.forEach((e, i) => { if (b[i]) b[i].value = e.value; });
+  Object.assign(g.style, {position: 'fixed', left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px', margin: 0, zIndex: 9998, pointerEvents: 'none', transformOrigin: '50% 50%', willChange: 'transform,opacity'});
+  g._r = r; return g;
+}
+function chompSound(ctx, when, kind){
+  try {
+    const t0 = ctx.currentTime + when, out = ctx.createGain(); out.gain.value = .9; out.connect(ctx.destination);
+    const noise = (dur, shape) => { const len = Math.max(1, ctx.sampleRate * dur | 0), bf = ctx.createBuffer(1, len, ctx.sampleRate), d = bf.getChannelData(0);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * shape(i / len); const n = ctx.createBufferSource(); n.buffer = bf; return n; };
+    const tone = (type, f0, f1, t, dur, vol, dest = out) => { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = type;
+      o.frequency.setValueAtTime(f0, t); if (f1) o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+      g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + .006); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+      o.connect(g); g.connect(dest); o.start(t); o.stop(t + dur + .02); };
+    const band = (n, f, q, vol, t) => { const bp = ctx.createBiquadFilter(), g = ctx.createGain(); bp.type = 'bandpass'; bp.frequency.value = f; bp.Q.value = q; g.gain.value = vol; n.connect(bp); bp.connect(g); g.connect(out); n.start(t); };
+    if (kind === 'snap') {
+      // 1. teeth clack: two hard, very short clicks
+      band(noise(.018, k => (1 - k) ** 6), 3800, 2.5, 1.4, t0);
+      band(noise(.014, k => (1 - k) ** 6), 2600, 3, 1.0, t0 + .012);
+      // 2. heavy jaw thump
+      tone('sine', 120, 34, t0, .32, .95); tone('triangle', 70, 30, t0, .22, .5);
+      // 3. crunchy bite: grainy noise with crackles
+      band(noise(.2, k => (1 - k) ** 2 * (Math.random() < .35 ? 1 : .25)), 1600, .9, .8, t0 + .008);
+      // 4. a little low growl rumble underneath
+      const lp = ctx.createBiquadFilter(), g = ctx.createGain(); lp.type = 'lowpass'; lp.frequency.value = 180; g.gain.value = .6;
+      const r = noise(.45, k => Math.sin(k * Math.PI) * .9); r.connect(lp); lp.connect(g); g.connect(out); r.start(t0);
+    } else if (kind === 'chew') {
+      band(noise(.11, k => (1 - k) ** 2.5 * (Math.random() < .4 ? 1 : .3)), 2100 + Math.random() * 600, 1.1, .55, t0);
+      tone('sine', 90, 45, t0, .12, .35);
+    } else if (kind === 'coin') {
+      // "cha-ching": a bright two-note coin chime, then a soft sparkle run
+      const shimmer = ctx.createGain(); shimmer.gain.value = .5; shimmer.connect(out);
+      [[1975, 0, .55], [2637, .085, .7]].forEach(([f, d, len]) => {
+        tone('sine', f, 0, t0 + d, len, .32); tone('sine', f * 2.01, 0, t0 + d, len * .5, .09); tone('triangle', f * 3.02, 0, t0 + d, len * .25, .04);
+      });
+      band(noise(.03, k => (1 - k) ** 4), 6500, 2, .35, t0); // the metallic "cha"
+      [3136, 3520, 3951, 4699, 5274].forEach((f, i) => tone('sine', f, 0, t0 + .2 + i * .045, .22, .07, shimmer));
+    }
+  } catch (e) {}
+}
+// recorded sound effects (made for NoctCent): the bite and the coin chime
+const SFX = {buf: {}};
+async function sfxLoad(ctx, name){
+  if (SFX.buf[name]) return SFX.buf[name];
+  const url = (window.__SFX && window.__SFX[name]) || (name + '.mp3');
+  const ab = await (await fetch(url)).arrayBuffer();
+  return (SFX.buf[name] = await new Promise((ok, no) => ctx.decodeAudioData(ab, ok, no)));
+}
+function sfxAt(ctx, name, atCtxTime, vol = 1){
+  sfxLoad(ctx, name).then(b => { const s = ctx.createBufferSource(), g = ctx.createGain(); s.buffer = b; g.gain.value = vol; s.connect(g); g.connect(ctx.destination);
+    const late = ctx.currentTime - atCtxTime; if (late > .25) return; s.start(Math.max(ctx.currentTime, atCtxTime), Math.max(0, late)); }).catch(() => {});
+}
+function chomp(ghost, amount){
+  if (!ghost || window.__chomping) return; window.__chomping = true;
+  const PX = 3, CWd = Math.ceil(innerWidth / PX), CHt = Math.ceil(innerHeight / PX), r = ghost._r;
+  const wrap = document.createElement('div'); wrap.className = 'chomp';
+  const cv = document.createElement('canvas'); cv.width = CWd; cv.height = CHt;
+  const bk = document.createElement('canvas'); bk.width = CWd; bk.height = CHt; bk.className = 'throat';
+  const amt = document.createElement('div'); amt.className = 'chompAmt'; amt.textContent = '+' + rp(amount);
+  wrap.append(bk, ghost, cv, amt); document.body.append(wrap);
+  const ctx = cv.getContext('2d'), img = ctx.createImageData(CWd, CHt), D = img.data;
+  const bctx = bk.getContext('2d'), bimg = bctx.createImageData(CWd, CHt), BD = bimg.data;
+  let actx = null; try { actx = new (window.AudioContext || window.webkitAudioContext)(); actx.resume(); } catch (e) {}
+  // the bite file has its impact 0.18 s in; line it up with the moment the jaws snap shut, the coin right after
+  let sfxOk = false; if (actx) { const base = actx.currentTime; sfxOk = true; sfxAt(actx, 'chomp', base + .86 - .18, 1); sfxAt(actx, 'coin', base + .86 + .12, .8); }
+  // mouth geometry (canvas pixels)
+  const cx = (r.left + r.width / 2) / PX, cy = (r.top + r.height / 2) / PX;
+  const hw = CWd * .66, gapMax = Math.min(r.height / 2 / PX + 4, CHt * .4);
+  // teeth: seeded so every bite looks hand-made but stable during the animation
+  let seed = (Date.now() % 9973) + 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const mkRow = (n, off, lenBase, fangLen) => Array.from({length: n}, (_, i) => {
+    const u = (i + .5 + off) / (n + off * 2), x = cx - hw * .9 + u * hw * 1.8, fang = Math.abs(u - .22) < .045 || Math.abs(u - .78) < .045;
+    return {x, b: (hw * 1.8 / n) * (fang ? .62 : .5) * (.9 + rnd() * .2), L: fang ? fangLen + rnd() * 3 : lenBase + rnd() * 4, lean: (rnd() - .5) * .35, chip: rnd() < .15, sink: 2 + rnd() * 5};
+  });
+  const nUp = Math.max(8, Math.round(hw * 1.8 / 13));
+  const UP = mkRow(nUp, 0, 15, 32), LO = mkRow(nUp - 1, .5, 12, 25);
+  const COL = {dark: [3, 3, 8], gum: [92, 18, 34], gumL: [140, 34, 54], gumD: [52, 8, 20], tooth: [236, 229, 206], toothL: [255, 252, 240], toothS: [184, 172, 140], toothT: [208, 198, 168], line: [40, 22, 20], toothR: [96, 86, 70], tongue: [70, 12, 26], lip: [46, 10, 22], lipL: [74, 18, 36], lipD: [22, 5, 12], lipWet: [128, 38, 60], lipGloss: [170, 90, 110]};
+  const t0 = performance.now(), T = {dark: 260, open: 700, snap: 860, chew: 1260, end: 2050};
+  const ease = {out: k => 1 - (1 - k) ** 3, in: k => k ** 3, inOut: k => k < .5 ? 4 * k ** 3 : 1 - (-2 * k + 2) ** 3 / 2};
+  const cl = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+  let snapped = false;
+  function frame(now){
+    const ms = now - t0;
+    // --- timeline ---
+    let dark, gap, toothA = 1, shake = 0;
+    if (ms < T.dark) { const k = ease.out(ms / T.dark); dark = .97 * k; gap = gapMax * (1.9 - .7 * k); toothA = k; }
+    else if (ms < T.open) { const k = (ms - T.dark) / (T.open - T.dark); dark = .97; gap = gapMax * (1.2 + .12 * Math.sin(k * Math.PI)) + Math.sin(ms / 23) * .6; } // menacing open, trembling
+    else if (ms < T.snap) { const k = ease.in((ms - T.open) / (T.snap - T.open)); dark = .98; gap = gapMax * 1.2 * (1 - k); }
+    else if (ms < T.chew) { const k = (ms - T.snap) / (T.chew - T.snap); dark = .98; gap = Math.max(0, Math.sin(k * Math.PI * 2) * 4 * (1 - k)); shake = 9 * (1 - k) ** 2; }
+    else { const k = cl((ms - T.chew) / (T.end - T.chew)); dark = .98 * (1 - ease.inOut(k)); gap = 0; toothA = 1 - ease.inOut(cl(k * 1.15)); }
+    if (ms >= T.snap && !snapped) { snapped = true; if (actx && !sfxOk) { chompSound(actx, 0, 'snap'); chompSound(actx, .3, 'coin'); } try { navigator.vibrate && navigator.vibrate([30, 60, 20]); } catch (e) {} amt.classList.add('go'); }
+    // --- the card being eaten ---
+    if (ms < T.snap) { const k = ms < T.open ? 0 : ease.in((ms - T.open) / (T.snap - T.open)); ghost.style.transform = `translate(${Math.sin(ms / 31) * k * 3}px,0) scale(${1 - .12 * k}, ${1 - .55 * k})`; ghost.style.opacity = String(1 - k * .6); }
+    else ghost.style.opacity = '0';
+    // --- draw the mouth ---
+    D.fill(0); BD.fill(0);
+    const dA = Math.round(dark * 255);
+    for (let x = 0; x < CWd; x++) {
+      const xx = x + .5, e = 1 - ((xx - cx) / hw) ** 2, ee = e > 0 ? e ** .55 : 0;
+      const yU = cy - gap * ee, yL = cy + gap * ee, gum = 0;
+      for (let y = 0; y < CHt; y++) {
+        const yy = y + .5, i = (y * CWd + x) * 4; let c = null, a = dA;
+        if (e > 0 && yy > yU && yy < yL) { // inside the mouth: a dark throat behind the card
+          a = 0; const g = Math.max(0, 1 - Math.hypot((xx - cx) / hw, (yy - cy) / Math.max(8, gap)) * 1.1);
+          BD[i] = 10 + 46 * g; BD[i + 1] = 2 + 4 * g; BD[i + 2] = 9 + 14 * g; BD[i + 3] = Math.round(255 * Math.min(1, dark / .9));
+        }
+        else if (e > 0 && yy <= yU && yy > yU - gum) { const q = (yU - yy) / gum; c = q < .18 ? COL.gumL : q > .75 ? COL.gumD : (x * 3 + y) % 7 === 0 ? COL.gumD : COL.gum; a = Math.round(255 * toothA); }
+        else if (e > 0 && yy >= yL && yy < yL + gum) { const q = (yy - yL) / gum; c = q < .18 ? COL.gumL : q > .75 ? COL.gumD : (x * 3 + y) % 7 === 0 ? COL.gumD : COL.gum; a = Math.round(255 * toothA); }
+        // teeth on top of everything
+        const tooth = (row, up) => {
+          for (const t of row) {
+            const dx = (xx - t.x) / t.b; if (Math.abs(dx) > 1.15) continue;
+            const ex = 1 - ((t.x - cx) / hw) ** 2; if (ex <= 0) continue;
+            const L = t.L * (.45 + .55 * ex ** .5) + t.sink, root = up ? cy - gap * ex ** .55 : cy + gap * ex ** .55;
+            const depth = up ? yy - root + t.sink : root - yy + t.sink; if (depth < 0 || depth > L) continue;
+            const k = depth / L, rk = Math.min(1, depth / (t.sink + 3)), half = ((1 - k) ** .85 + .04) * (rk < 1 ? rk ** .6 : 1), off = dx - t.lean * k; if (Math.abs(off) > half) continue; // pointed at both ends, like a thorn
+            if (t.chip && k > .82) continue;
+            const edge = Math.abs(off) > half - 1.1 / t.b;
+            if (edge) return COL.line;
+            if (rk < .45) return COL.toothR;                     // the root fades into the dark jaw
+            if (rk < .8) return COL.toothS;
+            if (off < -half * .45 && off > -half * .75 && k < .7) return COL.toothL; // glint
+            return k > .8 ? COL.toothT : off > half * .35 ? COL.toothS : COL.tooth;
+          }
+          return null;
+        };
+        if (toothA > 0 && e > -.05) { const tc = tooth(UP, true) || tooth(LO, false); if (tc) { c = tc; a = Math.round(255 * toothA); } }
+        if (!c) { if (a === 0) continue; c = COL.dark; }
+        D[i] = c[0]; D[i + 1] = c[1]; D[i + 2] = c[2]; D[i + 3] = a;
+      }
+    }
+    ctx.putImageData(img, 0, 0); bctx.putImageData(bimg, 0, 0);
+    wrap.style.transform = shake ? `translate(${(Math.random() - .5) * shake}px,${(Math.random() - .5) * shake}px)` : '';
+    window.__chompFrames = (window.__chompFrames || 0) + 1;
+    if (ms < T.end) requestAnimationFrame(frame);
+    else { wrap.remove(); window.__chomping = false; setTimeout(() => { try { actx && actx.close(); } catch (e) {} }, 2500); }
+  }
+  requestAnimationFrame(frame);
+}
+
+function save(){
+  const amount = digits($('amt').value); if (!amount || $('saveBtn').disabled) return;
+  const date = $('date').value || today();
+  const before = facts(), lvlBefore = catStats().level;
+  const t = {id:editingId || uid(), type:fType, amount, acc:selAcc, note:$('note').value.trim(), date};
+  if (fType === 'move') t.to = selTo; else t.cat = selCat;
+  if (editingId) { // replace in place; no xp for edits
+    const i = S.tx.findIndex(x => x.id === editingId);
+    if (i >= 0) S.tx[i] = t;
+    editingId = null; persist();
+    $('amt').value = ''; $('note').value = ''; $('date').value = today();
+    rerender(); renderForm(); catSay('tx_edited');
+    return;
+  }
+  let chomped = false;
+  if (fType === 'in') { const g = chompGhost(); if (g) { chomp(g, amount); chomped = true; } }
+  const paid = payingNote && noteOf(payingNote);
+  if (payingNote) { completeNote(payingNote, true); payingNote = null; }
+  const big = fType === 'out' && !!S.budget && date === today() && amount > Math.max(0, before.leftToday);
+  const firstToday = !S.tx.some(x => x.date === today());
+  S.tx.push(t); Room.feed(1);
+  S.xp += 10 + (firstToday ? 5 : 0); S.lastFeed = Date.now();
+  persist();
+  $('amt').value = ''; $('note').value = ''; $('date').value = today();
+  // pick what the cat says about it
+  const lvl = catStats().level, levelUp = lvl > lvlBefore, st = streak(), after = facts();
+  const vars = {amt: rp(amount), acc: accOf(selAcc).name, to: fType === 'move' ? accOf(selTo).name : '', n: st, name: paid ? short(paid.text) : ''};
+  let key;
+  if (paid) key = 'remind_paid';
+  else if (fType === 'move') key = 'move';
+  else if (fType === 'in') key = Math.random() < .65 ? 'in_' + ({gaji:'gaji', kiriman:'kiriman', jualan:'jualan'}[selCat] || 'lain') : 'income';
+  else if (S.budget && after.remain < 0 && before.remain >= 0) key = 'out_over';
+  else if (S.budget && amount >= S.budget * .5) key = 'out_huge';
+  else if (big) key = 'out_big';
+  else if (amount < 5000) key = 'out_tiny';
+  else if (firstToday && Math.random() < .45) key = 'first_today';
+  else key = Math.random() < .6 ? 'out_' + selCat : 'out';
+  if (levelUp) { key = 'level_up'; vars.n = lvl; }
+  else if (firstToday && st >= 3 && Math.random() < .6) key = 'streak';
+  if (chomped && !paid && !levelUp) key = 'income_chomp';
+  go('today');
+  MoonCat.logged({big, levelUp});
+  const speak = () => catSay(key, vars, {info: '+' + (firstToday ? 15 : 10) + ' xp'});
+  if (chomped) setTimeout(speak, 1700); else speak(); // let the mouth finish first
+}
+
+/* ---------------- board: notes, reminders, dreams ---------------- */
+const dayDiff = ds => Math.round((new Date(ds + 'T00:00') - new Date(today() + 'T00:00')) / 864e5);
+const openReminders = () => S.notes.filter(n => n.kind === 'remind' && !n.done).sort((a, b) => (a.due || '9').localeCompare(b.due || '9'));
+function noteOrder(a, b){
+  const da = a.kind === 'remind' && a.due ? a.due : '9', db = b.kind === 'remind' && b.due ? b.due : '9';
+  return da.localeCompare(db) || (b.pinned - a.pinned) || b.created - a.created;
+}
+function dueLabel(n){
+  if (!n.due) return '';
+  const d = dayDiff(n.due), dt = new Date(n.due + 'T00:00');
+  const txt = d < 0 ? `${-d} day${d < -1 ? 's' : ''} overdue` : d === 0 ? 'today' : d === 1 ? 'tomorrow' : d <= 6 ? `in ${d} days` : `${MONTHS[dt.getMonth()].slice(0, 3)} ${dt.getDate()}`;
+  return `<span class="due ${d < 0 ? 'late' : d <= 1 ? 'soon' : ''}">${txt}</span>`;
+}
+const IC_NOTE = PX.icon('note');
+const IC_GOAL = PX.icon('star');
+const IC_PIN = PX.icon('pin');
+let openTabung = null;
+function noteHTML(n){
+  const left = n.kind === 'remind'
+    ? `<button class="check${n.done ? ' on' : ''}" aria-label="Mark done" onclick="toggleDone('${n.id}')">${n.done ? PX.icon('check', 12) : ''}</button>`
+    : `<span class="nicon">${n.kind === 'goal' ? IC_GOAL : IC_NOTE}</span>`;
+  const meta = [];
+  if (n.kind === 'remind') {
+    if (n.due) meta.push(dueLabel(n));
+    if (n.amount) meta.push(`<span class="due">${rp(n.amount)}</span>`);
+    if (n.repeat) meta.push('<span class="due">monthly</span>');
+  }
+  let extra = '';
+  if (n.kind === 'remind' && n.amount && !n.done) extra += `<button class="mini" onclick="payNote('${n.id}')">pay & record</button>`;
+  if (n.kind === 'goal') {
+    const p = n.target ? Math.min(1, (n.saved || 0) / n.target) : 0;
+    meta.push(`<span class="due ${p >= 1 ? 'soon' : ''}">${rp(n.saved || 0)} / ${rp(n.target)} · ${Math.floor(p * 100)}%</span>`);
+    extra += `<div class="bar goalbar"><i style="width:${p * 100}%;background:${p >= 1 ? 'var(--gold)' : 'var(--eye)'}"></i></div>`;
+    if (p < 1) extra += openTabung === n.id
+      ? `<div class="tabung"><input id="tb-${n.id}" inputmode="numeric" placeholder="Rp" oninput="this.value = digits(this.value) ? fmt(digits(this.value)) : ''" onkeydown="if(event.key==='Enter')addSaving('${n.id}')"><button class="mini" style="margin:0" onclick="addSaving('${n.id}')">add</button></div>`
+      : `<button class="mini" onclick="openTabung='${n.id}';renderBoard();setTimeout(()=>{const i=$('tb-${n.id}');i&&i.focus()},30)">+ save</button>`;
+  }
+  return `<div class="note${n.done ? ' done' : ''}">${left}<div class="grow"><div class="txt">${esc(n.text)}</div>${meta.length ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:2px">${meta.join('<span class="due">·</span>')}</div>` : ''}${extra}</div>
+    <button class="pin${n.pinned ? ' on' : ''}" aria-label="${n.pinned ? 'Unpin' : 'Pin'}" onclick="togglePin('${n.id}')">${IC_PIN}</button>
+    <button class="del" aria-label="Delete" onclick="delNote('${n.id}')">×</button></div>`;
+}
+let nKind = 'note';
+const KIND_PH = {note:'write something… (e.g. rice got pricier)', remind:'remind me to… (e.g. pay electricity)', goal:'your dream… (e.g. new shoes)'};
+function setKind(k){
+  nKind = k;
+  document.querySelectorAll('#kseg button').forEach(b => b.classList.toggle('on', b.dataset.k === k));
+  $('nText').placeholder = KIND_PH[k];
+  $('nRemindRow').hidden = $('nRepeatRow').hidden = k !== 'remind';
+  $('nGoalRow').hidden = k !== 'goal';
+  $('nAdd').textContent = k === 'note' ? 'Pin it' : k === 'remind' ? 'Remind me' : 'Save dream';
+  checkComposer();
+}
+function checkComposer(){ $('nAdd').disabled = !$('nText').value.trim() || (nKind === 'goal' && !digits($('nTarget').value)); }
+['nAmt', 'nTarget'].forEach(id => $(id).addEventListener('input', e => { const n = digits(e.target.value); e.target.value = n ? fmt(n) : ''; checkComposer(); }));
+$('nText').addEventListener('input', checkComposer);
+$('nText').addEventListener('keydown', e => { if (e.key === 'Enter' && !$('nAdd').disabled) addNote(); });
+function addNote(){
+  const text = $('nText').value.trim(); if (!text) return;
+  const n = {id:uid(), kind:nKind, text, pinned:false, done:false, created:Date.now()};
+  if (nKind === 'remind') { n.due = $('nDue').value || ''; n.amount = digits($('nAmt').value); n.repeat = $('nRepeat').classList.contains('on'); }
+  if (nKind === 'goal') { n.target = digits($('nTarget').value); n.saved = 0; }
+  S.notes.push(n); Room.feed(1); persist();
+  $('nText').value = ''; $('nAmt').value = ''; $('nTarget').value = ''; $('nDue').value = ''; $('nRepeat').classList.remove('on');
+  checkComposer(); renderBoard(); renderToday();
+  catSay(nKind === 'note' ? 'note_add' : nKind === 'remind' ? (n.due ? 'remind_add' : 'remind_add_nodate') : 'goal_add',
+    {name: short(text), when: n.due ? dueLabel(n).replace(/<[^>]+>/g, '') : '', amt: n.target ? rp(n.target) : ''});
+}
+const noteOf = id => S.notes.find(n => n.id === id);
+function togglePin(id){ const n = noteOf(id); if (!n) return; n.pinned = !n.pinned; persist(); renderBoard(); renderToday(); catSay(n.pinned ? 'pin_on' : 'pin_off'); }
+function delNote(id){
+  const i = S.notes.findIndex(n => n.id === id); if (i < 0) return;
+  const [n] = S.notes.splice(i, 1); persist(); renderBoard(); renderToday();
+  catSay('note_deleted', null, {undo: undoSay(() => { S.notes.splice(i, 0, n); persist(); renderBoard(); renderToday(); })});
+}
+function nextMonth(ds){
+  const d = new Date(ds + 'T00:00'), day = d.getDate();
+  d.setDate(1); d.setMonth(d.getMonth() + 1);
+  d.setDate(Math.min(day, new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()));
+  return dkey(d);
+}
+function completeNote(id, silent){
+  const n = noteOf(id); if (!n) return;
+  if (n.repeat && n.due) { n.due = nextMonth(n.due); if (!silent) catSay('remind_done_repeat', {when: dueLabel(n).replace(/<[^>]+>/g, '')}); }
+  else { n.done = true; n.doneAt = Date.now(); if (!silent) catSay('remind_done', null, {undo: undoSay(() => { n.done = false; persist(); renderBoard(); renderToday(); })}); }
+  persist(); renderBoard(); renderToday();
+}
+function toggleDone(id){
+  const n = noteOf(id); if (!n) return;
+  if (n.done) { n.done = false; persist(); renderBoard(); renderToday(); catSay('remind_undone'); } else completeNote(id);
+}
+function payNote(id){
+  const n = noteOf(id); if (!n) return;
+  openForm('out', {amount:n.amount, note:n.text, cat:'tagihan', noteId:id});
+  catSay('pay_start', {name: short(n.text)});
+}
+function addSaving(id){
+  const n = noteOf(id), inp = $('tb-' + id); if (!n || !inp) return;
+  const a = digits(inp.value); if (!a) return;
+  const was = (n.saved || 0) >= n.target, p0 = (n.saved || 0) / n.target;
+  n.saved = (n.saved || 0) + a; openTabung = null; Room.feed(1); persist(); renderBoard(); renderToday();
+  const p1 = n.saved / n.target, vars = {name: short(n.text), amt: rp(a), pct: Math.min(100, Math.floor(p1 * 100))};
+  if (!was && p1 >= 1) { go('today'); MoonCat.logged({levelUp:true}); catSay('goal_done', vars, {hold: 12000, info: 'dream reached ✦'}); }
+  else { const m = [75, 50, 25].find(x => p0 * 100 < x && p1 * 100 >= x); catSay(m ? 'goal_' + m : 'goal_save', vars); }
+}
+function clearDone(){
+  const keep = S.notes.filter(n => !n.done), gone = S.notes.filter(n => n.done);
+  S.notes = keep; persist(); renderBoard();
+  catSay('done_cleared', {n: gone.length}, {undo: undoSay(() => { S.notes = S.notes.concat(gone); persist(); renderBoard(); })});
+}
+function renderBoard(){
+  const open = S.notes.filter(n => !n.done);
+  const sec = (title, list, empty, tail = '') => `<div class="card" style="margin-top:14px"><div class="sechead"><span class="label">${title}</span>${tail}</div>${list.length ? list.map(noteHTML).join('') : `<div class="empty">${empty}</div>`}</div>`;
+  const rem = open.filter(n => n.kind === 'remind').sort(noteOrder);
+  const notes = open.filter(n => n.kind === 'note').sort(noteOrder);
+  const goals = open.filter(n => n.kind === 'goal').sort(noteOrder);
+  const done = S.notes.filter(n => n.done).sort((a, b) => (b.doneAt || 0) - (a.doneAt || 0));
+  $('boardLists').innerHTML =
+    sec('reminders', rem, 'no reminders yet. e.g. pay rent on the 1st every month.') +
+    sec('notes', notes, 'empty. write anything you want to remember.') +
+    sec('dreams', goals, 'save slowly for something you want.') +
+    (done.length ? sec('done', done.slice(0, 6), '', `<button class="link" onclick="clearDone()">clear</button>`) : '');
+}
+
+/* ---------------- backup ---------------- */
+function exportData(){
+  const text = JSON.stringify({app:'mooncat', v:1, at:new Date().toISOString(), data:S}, null, 1);
+  if (window.ReactNativeWebView) {  // inside the Expo app: hand it to native, which opens the share sheet
+    window.ReactNativeWebView.postMessage(JSON.stringify({k:'export', name:`noctcent-backup-${today()}.json`, text}));
+    catSay('backup'); return;
+  }
+  const blob = new Blob([text], {type:'application/json'});
+  const a = Object.assign(document.createElement('a'), {href:URL.createObjectURL(blob), download:`noctcent-backup-${today()}.json`});
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  catSay('backup');
+}
+$('importFile').addEventListener('change', async e => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  try {
+    const j = JSON.parse(await f.text()), d = j && j.app === 'mooncat' ? j.data : null;
+    if (!d || !Array.isArray(d.tx)) throw 0;
+    if (!await confirmX(`Restore the backup${j.at ? ' from ' + j.at.slice(0, 10) : ''}? The data on this phone will be replaced (${d.tx.length} money records, ${(d.notes || []).length} on the board).`)) return;
+    const keep = {music:S.music};
+    S = Object.assign({}, DEF, d, keep); migrate(); persist();
+    rerender(); renderCat(); catSay('restore');
+  } catch (err) { catSay('restore_bad'); }
+});
+
+/* ---------------- report ---------------- */
+let view = new Date(); view.setDate(1);
+function shiftMonth(d){ view.setMonth(view.getMonth() + d); renderReport(); if (Date.now() - lastSayAt > 5000) reportSay(); }
+function renderReport(){
+  const y = view.getFullYear(), m = view.getMonth(), ym = y + '-' + pad(m + 1);
+  const tx = S.tx.filter(t => t.date.startsWith(ym)).sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
+  const inc = sum(tx, 'in'), out = sum(tx, 'out'), net = inc - out;
+  $('rTitle').textContent = MONTHS[m] + ' ' + y;
+  $('rIn').textContent = rp(inc); $('rOut').textContent = rp(out);
+  $('rNet').textContent = (net > 0 ? '+' : '') + rp(net); $('rNet').style.color = net < 0 ? 'var(--pink)' : net > 0 ? 'var(--mint)' : '';
+  const pct = S.budget ? out / S.budget : 0;
+  $('rPct').textContent = S.budget ? Math.round(pct * 100) + '% of ' + rp(S.budget) : 'no budget set';
+  $('rBar').style.width = Math.min(100, pct * 100) + '%';
+  $('rBar').style.background = pct > 1 ? 'var(--pink)' : 'var(--eye)';
+  $('rMoon').innerHTML = PX.moon(S.budget ? 1 - Math.min(1, pct) : 1, 2);
+  const dim = new Date(y, m + 1, 0).getDate(), per = {};
+  tx.filter(t => t.type === 'out').forEach(t => per[+t.date.slice(8)] = (per[+t.date.slice(8)] || 0) + t.amount);
+  const mx = Math.max(1, ...Object.values(per)), daily = S.budget / dim, tk = today();
+  let h = '';
+  for (let d = 1; d <= dim; d++) {
+    const v = per[d] || 0, isT = ym + '-' + pad(d) === tk;
+    h += `<i class="${isT ? 'today' : S.budget && v > daily ? 'over' : ''}" style="height:${Math.max(3, v / mx * 100)}%" title="${d}: ${rp(v)}"></i>`;
+  }
+  $('rDays').innerHTML = h;
+  const by = {}; tx.filter(t => t.type === 'out').forEach(t => by[t.cat] = (by[t.cat] || 0) + t.amount);
+  const rows = Object.entries(by).sort((a, b) => b[1] - a[1]);
+  $('rCats').innerHTML = rows.length ? rows.map(([id, v]) => { const c = catOf(id); return `<div class="catrow"><span>${c.name}</span><span class="amt">${rp(v)} <span class="sub">${Math.round(v / out * 100)}%</span></span><div class="bar"><i style="width:${v / rows[0][1] * 100}%;background:${c.c}"></i></div></div>`; }).join('')
+    : '<div class="empty">no spending this month yet.</div>';
+  let last = '', lh = '';
+  tx.forEach(t => {
+    if (t.date !== last) { last = t.date; const d = new Date(t.date + 'T00:00'); lh += `<div class="daygroup">${DAYS[d.getDay()]}, ${MONTHS[d.getMonth()].slice(0, 3)} ${d.getDate()}</div>`; }
+    lh += itemHTML(t);
+  });
+  $('rList').innerHTML = lh ? `<div class="list">${lh}</div>` : '<div class="empty">no records yet.</div>';
+}
+
+/* ---------------- cat ---------------- */
+function renderCat(){
+  $('setBudget').value = S.budget ? fmt(S.budget) : '';
+  $('swMusic').classList.toggle('on', S.music);
+  syncMood();
+}
+$('setBudget').addEventListener('input', e => { const n = digits(e.target.value); e.target.value = n ? fmt(n) : ''; S.budget = n; persist(); });
+$('setBudget').addEventListener('change', () => catSay(S.budget ? 'budget_set' : 'budget_zero', {amt: rp(S.budget)}));
+async function wipe(){
+  if (!await confirmX('Delete all records, wallets, and the cat\'s progress? This cannot be undone.')) return;
+  const keep = {music:S.music};
+  S = Object.assign({}, DEF, keep, {tx:[], chat:[]}); migrate(); persist(); rerender(); renderCat(); catSay('wiped');
+}
+
+/* ---------------- moon's notes: what the bookshelf says (all numbers computed here) ---------------- */
+function insights(all){
+  const now = new Date(), k = dkey, out = [];
+  const day = n => { const x = new Date(now); x.setDate(x.getDate() + n); return k(x); };
+  const mon = new Date(now); mon.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+  const w0 = k(mon), lw0 = (() => { const x = new Date(mon); x.setDate(x.getDate() - 7); return k(x); })(), lw1 = (() => { const x = new Date(mon); x.setDate(x.getDate() - 1); return k(x); })();
+  const outs = S.tx.filter(t => t.type === 'out'), sumR = (a, b) => outs.filter(t => t.date >= a && t.date <= b).reduce((s, t) => s + t.amount, 0);
+  const thisW = sumR(w0, today()), lastW = sumR(lw0, lw1);
+  const f = facts();
+  if (!S.tx.length) return [{c:'#5d6a9a', t:'my book is empty. record a few things and i will have something to read.'}];
+  // 1. this week vs last week
+  if (thisW || lastW) {
+    const d = lastW ? Math.round((thisW - lastW) / lastW * 100) : null;
+    out.push({id:'week', c:'#7fd4ff', t:`this week you spent ${rp(thisW)}` + (lastW ? ` — last week was ${rp(lastW)} (${d >= 0 ? '+' : ''}${d}%).` : '. nothing to compare with last week yet.') + (d != null ? (d > 25 ? ' a bit heavier. careful.' : d < -15 ? ' lighter. good.' : ' about the same.') : '')});
+  }
+  // 2. the category that grew the most this month vs last month
+  const ym = today().slice(0, 7), lm = (() => { const x = new Date(now.getFullYear(), now.getMonth() - 1, 1); return k(x).slice(0, 7); })();
+  const by = (m) => { const o = {}; outs.filter(t => t.date.startsWith(m)).forEach(t => o[t.cat] = (o[t.cat] || 0) + t.amount); return o; };
+  const cur = by(ym), prev = by(lm), dom = now.getDate(), dimPrev = new Date(now.getFullYear(), now.getMonth(), 0).getDate();
+  const top = Object.entries(cur).sort((a, b) => b[1] - a[1])[0];
+  if (top) {
+    const share = Math.round(top[1] / Math.max(1, f.spent) * 100);
+    let line = `${catOf(top[0]).name.toLowerCase()} takes the biggest bite this month: ${rp(top[1])} (${share}% of spending).`;
+    const pv = prev[top[0]];
+    if (pv) { const paced = pv / dimPrev * dom; const d = Math.round((top[1] - paced) / paced * 100); if (Math.abs(d) >= 20) line += ` that is ${Math.abs(d)}% ${d > 0 ? 'more' : 'less'} than at this point last month.`; }
+    out.push({id:'cat', c: catOf(top[0]).c, t: line});
+  }
+  // 3. which day of the week costs the most (needs a little history)
+  const recent = outs.filter(t => t.date >= day(-56));
+  if (recent.length >= 8) {
+    const wd = [0, 0, 0, 0, 0, 0, 0], cnt = [0, 0, 0, 0, 0, 0, 0];
+    recent.forEach(t => { wd[new Date(t.date + 'T00:00').getDay()] += t.amount; });
+    for (let i = 0; i < 56; i++) cnt[new Date(day(-i) + 'T00:00').getDay()]++;
+    const avg = wd.map((v, i) => v / cnt[i]), all = avg.reduce((a, b) => a + b, 0) / 7, hi = avg.indexOf(Math.max(...avg));
+    if (avg[hi] > all * 1.4) out.push({id:'day', c:'#ffd36a', t:`${DAYS[hi].toLowerCase()}s are your most expensive day — about ${rp(avg[hi])} on average, while a normal day is ${rp(all)}.`});
+  }
+  // 4. where the month is heading
+  if (S.budget && f.spent) {
+    const daily = f.spent / dom, proj = Math.round(daily * f.dim), left = S.budget - proj;
+    out.push({id:'pace', c: left >= 0 ? '#8fd9c4' : '#ff9fb5', t: left >= 0
+      ? `at this pace the month ends with about ${rp(left)} of budget left.`
+      : `at this pace you go over budget by about ${rp(-left)}. ${rp(Math.max(0, Math.floor(f.remain / f.daysLeft)))} a day from now on keeps you safe.`});
+  }
+  // 5. in vs out this month
+  if (f.income) out.push({id:'flow', c:'#8fd9c4', t:`this month ${rp(f.income)} came in and ${rp(f.spent)} went out — ${f.income >= f.spent ? 'you kept ' + rp(f.income - f.spent) + '.' : 'that is ' + rp(f.spent - f.income) + ' more out than in.'}`});
+  // 6. habits: streak, biggest single expense, goals, reminders
+  const st = streak(); if (st >= 2) out.push({id:'streak', c:'#8f8cf0', t:`${st} days of records in a row. i noticed.`});
+  const big = outs.filter(t => t.date.startsWith(ym)).sort((a, b) => b.amount - a.amount)[0];
+  if (big && (all || out.length < 6)) out.push({id:'big', c:'#c4e6fb', t:`biggest single expense this month: ${rp(big.amount)}${big.note ? ' for ' + big.note.toLowerCase() : ''} (${whenTxt(big.date)}).`});
+  const g = S.notes.find(n => n.kind === 'goal' && !n.done && (n.saved || 0) < n.target);
+  if (g && (all || out.length < 7)) { const p = Math.floor((g.saved || 0) / g.target * 100); out.push({id:'goal', c:'#ffd36a', t:`${g.text.toLowerCase()}: ${p}% saved. ${rp(g.target - (g.saved || 0))} to go.`}); }
+  const r = openReminders().find(n => n.due && dayDiff(n.due) <= 7);
+  if (r && (all || out.length < 7)) out.push({id:'remind', c:'#ff9fb5', t:`coming up: ${r.text.toLowerCase()} · ${dueLabel(r).replace(/<[^>]+>/g, '')}${r.amount ? ' · ' + rp(r.amount) : ''}.`});
+  // 7-9. the extra books (only for the bookshelf, never in the quick notes)
+  if (all) {
+    // month by month: the top category over the last three months
+    if (top) {
+      const mo = [2, 1, 0].map(n => new Date(now.getFullYear(), now.getMonth() - n, 1)), vals = mo.map(d => by(k(d).slice(0, 7))[top[0]] || 0);
+      if (vals.filter(v => v > 0).length >= 2) {
+        let line = `${catOf(top[0]).name.toLowerCase()}, month by month: ` + mo.map((d, i) => `${MONTHS[d.getMonth()].slice(0, 3).toLowerCase()} ${rp(vals[i])}`).join(' · ') + ' (so far).';
+        if (vals[0] > 0 && vals[1] > 0) { const d = Math.round((vals[1] - vals[0]) / vals[0] * 100); if (Math.abs(d) >= 15) line += ` last month was ${Math.abs(d)}% ${d > 0 ? 'higher' : 'lower'} than the month before.`; }
+        out.push({id:'hist', c: catOf(top[0]).c, t: line});
+      }
+      // where a small cut matters most
+      if (dom >= 3) {
+        const nm = catOf(top[0]).name.toLowerCase(), proj = top[1] / dom * f.dim, over = S.budget && f.spent ? f.spent / dom * f.dim - S.budget : 0;
+        out.push({id:'tip', c:'#c9b27a', t: over > 0
+          ? `to stay inside your budget, ${nm} is the place to trim: about ${rp(Math.min(over, proj * .5))} less this month ${proj * .5 >= over ? 'closes the gap' : 'does the most'}.`
+          : `${nm} is on track for about ${rp(proj)} this month. trim it by a tenth and you keep ${rp(proj * .1)}.`});
+      }
+    }
+    // quiet days: days this month (since your first record) with no spending
+    const mStart = new Date(now.getFullYear(), now.getMonth(), 1), first = S.tx.reduce((a, t) => t.date < a ? t.date : a, today()), from = new Date(Math.max(mStart, new Date(first + 'T00:00')));
+    const spentDays = new Set(outs.map(t => t.date)), todayD = new Date(today() + 'T00:00');
+    let days = Math.round((todayD - from) / 864e5) + 1; if (!spentDays.has(today()) && days > 1) days--; // today is not over yet
+    if (days >= 5) {
+      let quiet = 0, run = 0, best = 0;
+      for (let i = 0; i < days; i++) { const d = new Date(from); d.setDate(from.getDate() + i); if (spentDays.has(k(d))) run = 0; else { quiet++; run++; best = Math.max(best, run); } }
+      out.push({id:'quiet', c:'#78a392', t: quiet
+        ? `${quiet} of ${days} days this month had no spending. the longest quiet stretch: ${best} day${best > 1 ? 's' : ''}.`
+        : `every one of the last ${days} days had some spending. a quiet day or two would show.`});
+    }
+  }
+  return all ? out : out.slice(0, 6);
+}
+const whenTxt = ds => { if (ds === today()) return 'today'; const n = dayDiff(ds); if (n === -1) return 'yesterday'; const d = new Date(ds + 'T00:00'); return MONTHS[d.getMonth()].slice(0, 3) + ' ' + d.getDate(); };
+function showNotes(lines){
+  const d = new Date();
+  $('notesDate').textContent = MONTHS[d.getMonth()].slice(0, 3) + ' ' + d.getDate();
+  $('notesBody').innerHTML = lines.map(l => `<div class="nl"><i style="background:${l.c}"></i><span>${esc(l.t)}</span></div>`).join('');
+  const c = $('notesCard'); c.hidden = false; c.scrollTop = 0; c.classList.remove('fresh'); void c.offsetWidth; c.classList.add('fresh');
+}
+let rsayT;
+function roomSay(text, pos){
+  const el = $('roomSay'), box = $('roomCv'); el.textContent = text; el.hidden = false;
+  const W = box.clientWidth, w = el.offsetWidth;
+  el.style.left = Math.max(4, Math.min(W - w - 4, pos.x * W - w / 2)) + 'px'; el.style.top = Math.max(8, pos.y * box.clientHeight) + 'px';
+  clearTimeout(rsayT); rsayT = setTimeout(() => el.hidden = true, 3800);
+}
+$('roomCv').addEventListener('click', () => { $('notesCard').hidden = true; });
+function readShow(title, col, side){
+  const c = $('shelfRead'); $('srTitle').textContent = title; $('srTitle').style.color = col; $('srDot').style.background = col;
+  $('srTyped').textContent = ''; $('srRest').textContent = ''; c.classList.remove('done'); c.classList.toggle('top', side === 'top'); c.hidden = false;
+  c.classList.remove('fresh'); void c.offsetWidth; c.classList.add('fresh');
+}
+function readText(typed, rest, done){ $('srTyped').textContent = typed; $('srRest').textContent = rest; $('shelfRead').classList.toggle('done', !!done); }
+function readHide(){ $('shelfRead').hidden = true; }
+Shelf.attach({
+  cv: $('shelfCv'), room: $('roomCv'), box: $('roomPane'), cap: $('shelfCap'), back: $('shelfBack'), vig: $('shelfVig'),
+  books: () => insights(true), say: roomSay, words: (k, v) => CatWords.pick(k, v || {}),
+  mood: () => { const c = catStats(); return c.happy <= 3 ? 'sad' : c.full <= 1 ? 'sleepy' : c.happy >= 8 ? 'good' : 'normal'; },
+  lampMix: () => Room.mix(), candle: () => Room.candle(), geom: () => Room.geom(), hold: on => Room.hold(on),
+  readShow, readText, readHide, onClose: () => { $('roomSay').hidden = true; readHide(); }
+});
+Bed.attach({
+  cv: $('bedCv'), room: $('roomCv'), box: $('roomPane'), back: $('bedBack'), vig: $('bedVig'),
+  say: roomSay, words: (k, v) => CatWords.pick(k, v || {}),
+  music: () => !!S.music, lampMix: () => Room.mix(), candle: () => Room.candle(), geom: () => Room.geom(), asleep: () => Room.asleepInBed(), covered: () => Room.coveredInBed(), hold: (on, asleep, cov) => Room.hold(on, asleep, 'bed', cov),
+  onClose: () => { $('roomSay').hidden = true; }
+});
+Room.attach($('roomCv'), {
+  openShelf: () => Shelf.open(),
+  openBed: () => Bed.open(),
+  state: () => S.room, save: persist, insights, onRead: showNotes, say: roomSay,
+  words: (k, v) => CatWords.pick(k, v || {}),
+  music: () => !!S.music, toggleMusic: () => { toggleMusic(true); return !!S.music; }
+});
+
+function toggleSettings(force){
+  const open = typeof force === 'boolean' ? force : $('setPane').hidden;
+  $('setPane').hidden = !open;
+  $('roomPane').style.display = open ? 'none' : '';
+  $('gearBtn').classList.toggle('on', open);
+}
+
+
+/* ---------------- notifications: the web side plans them, the native shell schedules them ---------------- */
+let notifTimer = 0;
+function queueNotify(){ clearTimeout(notifTimer); notifTimer = setTimeout(sendNotify, 1500); }
+function nCfg(){ if (!S.notif || typeof S.notif !== 'object') S.notif = {on:true, hour:21}; return S.notif; }
+function planNotify(){
+  const cfg = nCfg(), out = [], now = Date.now(), W = (k, v) => CatWords.pick(k, v || {});
+  const at = (d, h, m = 0) => { const x = new Date(d); x.setHours(h, m, 0, 0); return x.getTime(); };
+  const add = (id, when, key, vars, go) => { if (when > now + 60000) out.push({id, at: when, title: 'Moon 🌙', body: W(key, vars), go: go || ''}); };
+  const days = new Set(S.tx.map(t => t.date)), td = new Date(), loggedToday = days.has(dkey(td)), st = streak();
+  // 1 + 5. daily log reminder for the next 7 days (skips today if you already recorded); mentions the streak when one is alive
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(); d.setDate(d.getDate() + i);
+    if (i === 0 && loggedToday) continue;
+    const s = i === 0 ? st : i === 1 && loggedToday ? st : 0;
+    if (s >= 2) add('daily' + i, at(d, cfg.hour), 'notif_streak', {n: s}, 'money');
+    else add('daily' + i, at(d, cfg.hour), 'notif_daily', null, 'money');
+  }
+  // 2. bills / reminders: the evening before and the morning of
+  for (const n of S.notes) {
+    if (n.kind !== 'remind' || n.done || !n.due) continue;
+    const d = new Date(n.due + 'T00:00'), amt = n.amount ? rp(n.amount) : '', v = {what: short(n.text, 30), amt};
+    const before = new Date(d); before.setDate(before.getDate() - 1);
+    add('rb' + n.id, at(before, 19), amt ? 'notif_bill_tomorrow_amt' : 'notif_bill_tomorrow', v, 'board');
+    add('rd' + n.id, at(d, 9), amt ? 'notif_bill_today_amt' : 'notif_bill_today', v, 'board');
+  }
+  // 3. sunday evening summary of this week vs last week
+  { const sun = new Date(); sun.setDate(sun.getDate() + ((7 - sun.getDay()) % 7));
+    const mon = new Date(sun); mon.setDate(sun.getDate() - 6); mon.setHours(0, 0, 0, 0);
+    const pmon = new Date(mon); pmon.setDate(mon.getDate() - 7);
+    let wk = 0, pw = 0;
+    for (const t of S.tx) { if (t.type !== 'out') continue; const x = new Date(t.date + 'T12:00'); if (x >= mon && x <= sun) wk += t.amount; else if (x >= pmon && x < mon) pw += t.amount; }
+    const key = !wk ? 'notif_week_empty' : !pw ? 'notif_week' : wk < pw ? 'notif_week_less' : 'notif_week_more';
+    add('week', at(sun, 20), key, {amt: rp(wk), pct: pw ? Math.round(Math.abs(wk - pw) / pw * 100) + '%' : ''}, 'money'); }
+  // 4. Moon misses you: only fires if the app stays closed (every open pushes these forward)
+  { const a = new Date(); a.setDate(a.getDate() + 3); add('miss3', at(a, 19, 30), 'notif_miss');
+    const b = new Date(); b.setDate(b.getDate() + 7); add('miss7', at(b, 19, 30), 'notif_miss_long'); }
+  // 6. the next two full moons, 8 pm
+  { const SYN = 29.530588853 * 864e5, ref = Date.UTC(2000, 0, 21, 4, 40); let k = Math.ceil((now - ref) / SYN);
+    for (let i = 0; i < 2; i++, k++) add('moon' + i, at(new Date(ref + k * SYN), 20), 'notif_fullmoon', null, 'cat'); }
+  return out.sort((a, b) => a.at - b.at).slice(0, 40);
+}
+function widgetData(){
+  const f = facts(), c = catStats(), L = k => [0, 1, 2, 3].map(() => CatWords.pick(k)).filter((v, i, a) => v && a.indexOf(v) === i);
+  return {spentToday: f.spentToday, left: f.remain, budget: S.budget, health: c.health, streak: streak(), day: today(), isToday: true,
+    lines: {sleep: L('widget_sleep'), calm: L('widget_calm'), happy: L('widget_happy'), worry: L('widget_worry')}};
+}
+window.__add = () => { try { go('money'); openForm('out'); } catch (e) {} };
+function sendNotify(){
+  if (!window.ReactNativeWebView) return;
+  try { window.ReactNativeWebView.postMessage(JSON.stringify({k: 'widget', d: widgetData()})); } catch (e) {}
+  const cfg = nCfg();
+  try { window.ReactNativeWebView.postMessage(JSON.stringify({k: 'notify', on: !!cfg.on, items: cfg.on ? planNotify() : []})); } catch (e) {}
+}
+function syncNotifUI(){
+  const cfg = nCfg(), sel = $('setNotifHour');
+  $('swNotif').classList.toggle('on', !!cfg.on); $('notifHourRow').style.opacity = cfg.on ? '' : '.45';
+  if (!sel.options.length) for (let h = 17; h <= 23; h++) sel.add(new Option(String(h).padStart(2, '0') + ':00', h));
+  sel.value = cfg.hour;
+}
+function toggleNotif(){ const cfg = nCfg(); cfg.on = !cfg.on; persist(); syncNotifUI(); catSay(cfg.on ? 'notif_on' : 'notif_off', null, {hold: 4000}); }
+function setNotifHour(h){ nCfg().hour = +h; persist(); }
+window.__go = name => { try { go(name); } catch (e) {} };
+document.addEventListener('visibilitychange', () => { if (document.hidden) sendNotify(); });
+/* ---------------- music (gapless loop via Web Audio, falls back to <audio>) ---------------- */
+let actx, abuf, asrc, aEl;
+let playing = false;
+async function startMusic(){
+  if (playing) return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    await actx.resume();
+    if (actx.state !== 'running') return; // the browser wants a tap first: tryMusic() runs again on the first touch
+    if (!abuf) abuf = await actx.decodeAudioData(await (await fetch((window.__MUSIC_URL||'mooncat-theme.mp3'))).arrayBuffer());
+    if (playing || !S.music) return;
+    asrc = actx.createBufferSource(); asrc.buffer = abuf; asrc.loop = true;
+    asrc.loopStart = 0; asrc.loopEnd = Math.min(60, abuf.duration);
+    const g = actx.createGain(); g.gain.value = .55; asrc.connect(g).connect(actx.destination); asrc.start(); playing = true;
+  } catch (e) {
+    aEl = aEl || Object.assign(new Audio((window.__MUSIC_URL||'mooncat-theme.mp3')), {loop:true, volume:.55});
+    aEl.play().then(() => playing = true).catch(() => {});
+  }
+}
+function stopMusic(){ if (asrc) { try { asrc.stop(); } catch (e) {} asrc = null; } if (aEl) aEl.pause(); playing = false; }
+function tryMusic(){ if (S.music && !playing) startMusic(); }
+async function toggleMusic(quiet){
+  S.music = !S.music; persist();   // the choice is remembered: off stays off until you turn it on again
+  $('musicBtn').classList.toggle('on', S.music); $('swMusic').classList.toggle('on', S.music);
+  if (quiet !== true) catSay(S.music ? 'music_on' : 'music_off', null, {hold: 5000});
+  if (S.music) startMusic(); else stopMusic();
+}
+
+/* ---------------- confirm dialog (the built-in confirm() does not work in the app's WebView) ---------------- */
+function confirmX(msg){
+  return new Promise(res => {
+    const o = document.createElement('div');
+    o.style.cssText = 'position:fixed;inset:0;z-index:99;background:rgba(3,5,14,.75);display:grid;place-items:center;padding:24px';
+    o.innerHTML = '<div style="max-width:340px;width:100%;background:var(--card);border:2px solid var(--edge2);padding:18px;display:flex;flex-direction:column;gap:16px;box-shadow:0 4px 0 rgba(0,0,0,.5)">' +
+      '<div style="font-size:14px;line-height:1.5"></div>' +
+      '<div style="display:flex;gap:18px;justify-content:flex-end"><button class="link" data-v="0" style="color:var(--muted)">cancel</button><button class="link" data-v="1">yes</button></div></div>';
+    o.firstChild.firstChild.textContent = msg;
+    o.addEventListener('click', e => {
+      const b = e.target.closest('button'); if (!b && e.target !== o) return;
+      o.remove(); res(!!b && b.dataset.v === '1');
+    });
+    document.body.appendChild(o);
+  });
+}
+// Android back button: close a dialog if one is open, otherwise ask native to exit
+window.__back = function(){
+  const o = [...document.body.children].find(el => el.style && el.style.zIndex === '99');
+  if (o) { o.click(); return; }
+  if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage(JSON.stringify({k:'exit'}));
+};
+
+/* ---------------- misc ---------------- */
+let tt, tAct = null;
+function toast(m, actLabel, fn, cat){
+  const t = $('toast');
+  t.innerHTML = (cat ? PX.icon('cat', 12) : '') + `<span>${esc(m)}</span>` + (actLabel ? `<u>${esc(actLabel)}</u>` : '');
+  tAct = fn || null; t.classList.toggle('act', !!fn); t.classList.add('on');
+  clearTimeout(tt); tt = setTimeout(() => { t.classList.remove('on', 'act'); tAct = null; }, fn ? 4500 : cat ? 2800 : 1800);
+}
+$('toast').addEventListener('click', () => { if (tAct) { const f = tAct; tAct = null; $('toast').classList.remove('on', 'act'); f(); } });
+PX.hydrate(); PX.sky($('sky'));
+miniCat('money', '#s-money .perch>i[data-sp]', 'sit'); miniCat('board', '#s-board .peek>i[data-sp]', 'peek');
+MoonCat.attach($('catBig'));
+if (S.music !== false) S.music = true;  // music is on by default
+$('musicBtn').classList.toggle('on', S.music);
+syncNotifUI(); sendNotify();
+tryMusic(); ['pointerdown', 'touchstart', 'keydown'].forEach(ev => document.addEventListener(ev, tryMusic, {passive: true}));
+persist(); setKind('note'); renderToday(); renderForm(); renderBoard();
+
+/* greeting when the app opens, then quiet thoughts while you just look at the cat */
+(function greet(){
+  const now = Date.now(), h = new Date().getHours(), gap = S.lastSeen ? (now - S.lastSeen) / 864e5 : 0;
+  const key = !S.lastSeen && !S.tx.length && !S.notes.length ? 'welcome'
+    : gap >= 3 ? 'back_long'
+    : gap > 0 && gap < .02 ? 'back_short'
+    : h < 4 ? 'greet_late' : h < 11 ? 'greet_morning' : h < 15 ? 'greet_day' : h < 18 ? 'greet_evening' : h < 23 ? 'greet_night' : 'greet_late';
+  S.lastSeen = now; persist();
+  catSay(key, {n: Math.floor(gap)}, {hold: 7000});
+})();
+function idleLine(){
+  const f = facts(), h = new Date().getHours(), st = streak(), ph = moonAge() / 29.530588853;
+  const r = openReminders().find(n => n.due && dayDiff(n.due) <= 3);
+  const g = S.notes.find(n => n.kind === 'goal' && !n.done && n.target && (n.saved || 0) < n.target);
+  const pools = ['idle_any', 'idle_any', h < 4 || h >= 19 ? 'idle_night' : h < 11 ? 'idle_morning' : h < 15 ? 'idle_day' : 'idle_evening'];
+  if (S.budget) pools.push(f.remain < 0 ? 'idle_budget_over' : f.leftToday < f.allowance * .25 ? 'idle_budget_tight' : 'idle_budget_good');
+  if (!f.tToday.length) pools.push('idle_no_tx');
+  if (Math.abs(ph - .5) < .06) pools.push('idle_full_moon');
+  if (ph < .04 || ph > .96) pools.push('idle_new_moon');
+  if (st >= 3) pools.push('idle_streak');
+  if (r) pools.push('idle_remind');
+  if (g) pools.push('idle_goal');
+  if (f.total > 0) pools.push('idle_rich');
+  const key = pools[Math.random() * pools.length | 0];
+  return CatWords.pick(key, {
+    left: rp(Math.max(0, f.leftToday)), n: st, total: rp(f.total),
+    name: short(key === 'idle_remind' ? r.text : g ? g.text : ''),
+    when: r ? dueLabel(r).replace(/<[^>]+>/g, '') : '', pct: g ? Math.floor((g.saved || 0) / g.target * 100) : 0
+  });
+}
+setInterval(() => {
+  const now = Date.now();
+  if (current !== 'today' || document.hidden || now < holdUntil || now - lastIdleAt < 15000) return;
+  lastIdleAt = now; idleN++;
+  $('bubble').textContent = (idleN % 3 === 0 ? '' : idleLine()) || bubbleText(facts());
+}, 1000);
+setInterval(() => { if (current === 'today') renderToday(); }, 60000);
+</script>
+</body>
+</html>
